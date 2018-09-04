@@ -1,0 +1,53 @@
+extends ../../layout/home
+
+block content
+	ol.breadcrumb
+		li
+			a(href='/') Home
+		li.active My Notifications
+	section#content
+		.container.container-alt
+			.block-header
+				h2
+					| My Notifications
+					small List of my notifications
+			if (success_messages.length > 0)
+				.row
+					.col-sm-12.col-md-12.m-t-30
+						.alert.alert-success
+							| #{success_messages}
+			if (error_messages.length > 0)
+				.row
+					.col-sm-12.col-md-12.m-t-30
+						.alert.alert-danger
+							| #{error_messages}
+			.card
+				.card-header
+					h2 Notifications
+						small This are your notifications
+					ul.actions
+						li
+							a.c-red.f-18(href='/clean-notifications', data-toggle="tooltip", data-placement="top", title="", data-original-title="Delete Notifications")
+								span.zmdi.zmdi-delete
+				.list-group.lg-odd-black
+					each globalnotification in results.globalnotifications
+						.list-group-item.media
+							.checkbox.pull-left
+								a(href='/members/'+globalnotification.sender_id._id)
+									img.lgi-img(src=globalnotification.sender_id.local.avatar_60, alt='img', data-toggle="tooltip", data-placement="top", title="", data-original-title='Sender '+globalnotification.sender_id.local.user_name)
+							.media-body
+								.lgi-heading
+									if (globalnotification.seen < 1)
+										strong #{globalnotification.link_title}
+									else
+										| #{globalnotification.link_title} - #{globalnotification.link_text}
+								.row.m-t-15.m-b-15
+									.col-md-12
+										| !{globalnotification.message}
+										| !{globalnotification.plus_message}
+								.clearfix
+								ul.lgi-attrs
+									li
+										| Sent #{moment(globalnotification.createdAt).fromNow()}
+									li
+										| #{globalnotification.link_text}

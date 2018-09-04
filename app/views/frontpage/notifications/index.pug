@@ -1,0 +1,118 @@
+extends ../../layout/home
+
+block content
+	ol.breadcrumb
+		li
+			a(href='/') Home
+		li.active Server Admins Notifications
+	section#content
+		.container.container-alt
+			.block-header
+				h2
+					| Server Admins Notifications
+					small List of admin notifications
+			if (success_messages.length > 0)
+				.row
+					.col-sm-12.col-md-12.m-t-30
+						.alert.alert-success
+							| #{success_messages}
+			if (error_messages.length > 0)
+				.row
+					.col-sm-12.col-md-12.m-t-30
+						.alert.alert-danger
+							| #{error_messages}
+			if (rconconsole_messages.length > 0)
+				.row
+					.col-sm-12.col-md-12.m-t-30
+						.alert.alert-info
+							| #{rconconsole_messages}
+			.card
+				.card-header
+					h2 New Unban Requests
+						small This notifications are visible only for Server Admins with enough power to make bans or unbans
+				.list-group.lg-odd-black
+					each unbanrequest in results.adminunbanrequests
+						.list-group-item.media
+							.checkbox.pull-left
+								a(href='/members/'+unbanrequest.sender_id._id)
+									img.lgi-img(src=unbanrequest.sender_id.local.avatar_60, alt='img', data-toggle="tooltip", data-placement="top", title="", data-original-title='Sender '+unbanrequest.sender_id.local.user_name)
+							.pull-right
+								.actions.dropdown
+									a(href='', data-toggle='dropdown')
+										i.zmdi.zmdi-more-vert
+									ul.dropdown-menu.dropdown-menu-right.bgm-orange
+										li
+											a(href='/unban-request/delete/'+unbanrequest.bann_id._id)
+												span.zmdi.zmdi-thumb-down
+												|  Decline Unban Request
+										li.divider
+										li
+											a(href='/rconcmd/unban/'+unbanrequest.bann_id._id)
+												span.zmdi.zmdi-thumb-up
+												|  Accept Unban Request
+							.media-body
+								.lgi-heading
+									span(class="btn m-r-15 btn-xs bgm-orange")
+										| #{unbanrequest.notification_msg}
+								.row.m-t-15
+									.col-md-12
+										| !{unbanrequest.unban_msg}
+								.clearfix
+								ul.lgi-attrs
+									li 
+										| Player: 
+										strong.red #{unbanrequest.bann_id.player_name}
+									li 
+										| Players Guid: 
+										strong.red #{unbanrequest.bann_id.player_guid}
+									li
+										| Ban Appeal sent #{moment(unbanrequest.createdAt).fromNow()}
+									li
+										a(href="/banlist/"+unbanrequest.bann_id._id) Ban Details
+			.card
+				.card-header
+					h2 New Admin Apllications
+						small This notifications are visible only for Server Admins with enough power to make users Admins
+				if (results.adminadminapps.length > 0)
+					.list-group.lg-odd-black
+						each adminapp in results.adminadminapps
+							.list-group-item.media
+								.checkbox.pull-left
+									a(href='/members/'+adminapp.sender_id._id)
+										img.lgi-img(src=adminapp.sender_id.local.avatar_60, alt='img', data-toggle="tooltip", data-placement="top", title="", data-original-title='Sender '+adminapp.sender_id.local.user_name)
+								.media-body
+									.lgi-heading
+										span(class="btn m-r-15 btn-xs bgm-lightblue")
+											| #{adminapp.notification_msg}
+									.row.m-t-15
+										.col-md-12.m-b-15
+											| Name: #{adminapp.sender_id.local.user_name}
+											br
+											| Age: #{adminapp.admin_app_id.age}
+											br
+											br
+											| #{adminapp.admin_app_msg}
+									.clearfix
+									ul.lgi-attrs
+										li 
+											if (adminapp.admin_app_id.status===true)
+												button.btn.bgm-deeporange.btn-xs.btn-disabled(disabled="disabled") Conversation Alread Started
+											else
+												form(method='post', action='/admin-application/new/conversation')
+													input(type='hidden', name='sender_id', value=adminapp.sender_id._id)
+													input(type='hidden', name='app_id', value=adminapp.admin_app_id._id)
+													input(type='hidden', name='_csrf', value=csrfToken)
+													button.btn.btn-info.btn-xs(type='submit') Start Conversation
+										li 
+											form.notificationForm(method='post', action='/admin-application/accept/admin-app')
+												input(type='hidden', name='user_id', value=adminapp.sender_id._id)
+												input(type='hidden', name='new_admin_name', value=adminapp.sender_id.local.user_name)
+												input(type='hidden', name='appid', value=adminapp.admin_app_id._id)
+												input(type='hidden', name='notifymessage', class="notifymessage", value="We have a New Admin, Congratulations "+adminapp.sender_id.local.user_name)
+												input(type='hidden', name='_csrf', value=csrfToken)
+												button.btn.btn-success.btn-xs(type='submit') Accept Application
+										li
+											form(method='post', action='/admin-application/delete/admin-app')
+												input(type='hidden', name='appid', value=adminapp.admin_app_id._id)
+												input(type='hidden', name='_csrf', value=csrfToken)
+												button.btn.btn-danger.btn-xs(type='submit') Decline Application

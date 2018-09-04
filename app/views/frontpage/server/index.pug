@@ -1,0 +1,291 @@
+extends ../../layout/home
+
+block content
+	ol.breadcrumb
+		li
+			a(href='/') Home
+		li.active=results.server.name
+	section#content
+		.container.container-alt
+				.block-header
+					h2
+						| #{results.server.name}
+						small Current map #{results.server.map_playing}
+				#profile-main.card
+					.pm-overview.c-overflow
+						.pmo-pic
+							.p-relative
+								img.img-responsive(src='/img/maps/'+results.server.map_img+'.jpg', alt='cod4')
+								.dropdown.pmop-message
+									a.btn.bgm-white.btn-float.z-depth-1(href='cod4://'+results.server.ip+':'+results.server.port, data-toggle="tooltip", data-placement="top", title="", data-original-title="Join Server CoD4x Required")
+										i.zmdi.zmdi-tv-play
+							.pmo-stat
+								h2.m-0.c-white #{results.server.online_players}
+								| #{results.server.map_playing}
+						.col-md-12.text-center.m-b-25
+							| Map started 
+							br
+							| #{results.server.map_started}
+						.pmo-block.pmo-contact.hidden-xs
+							h2 Server Details
+							ul
+								li
+									i.zmdi.zmdi-globe
+									span(class='flag-icon flag-icon-'+results.server.country_shortcode)
+									|  #{results.server.country}
+								li
+									i.zmdi.zmdi-account
+									|  Slots: #{results.server.max_players}
+									if(results.server.private_clients > 0)
+										|  (#{results.server.private_clients} reserved private slots)
+								li
+									i.zmdi.zmdi-cast-connected
+									|  #{results.server.ip}:#{results.server.port}
+								li
+									i.zmdi.zmdi-keyboard-hide
+									|  #{results.server.game_name} vers. #{results.server.shortversion}
+						.pmo-block.pmo-items.hidden-xs
+							h2 Server Administrators
+							.pmob-body
+								.row
+									each row in results.server.admins_on_server
+										a.col-xs-2(href='/members/'+row._id, data-toggle="tooltip", data-placement="top", title="", data-original-title=row.local.user_name)
+											img.img-circle(src=row.local.avatar_60, alt='')
+					.pm-body.clearfix
+						.tab(role='tabpanel')
+							ul.tab-nav(role='server')
+								li.active
+									a(href='#server', aria-controls='server', role='tab', data-toggle='tab')
+										i.zmdi.zmdi-account.m-r-10
+										|  #{results.server.name}
+								li(role='screenshots')
+									a(href='#screenshots', aria-controls='screenshots', role='tab', data-toggle='tab')
+										i.zmdi.zmdi-camera.m-r-10
+										|  Screenshots
+								li(role='server_rules')
+									a(href='#server_rules', aria-controls='server_rules', role='tab', data-toggle='tab')
+										i.zmdi.zmdi-star.m-r-10
+										|  Server Rules
+							.tab-content
+								#server.tab-pane.active.animated.fadeIn(role='tabpanel')
+									if (success_messages.length > 0)
+										.row
+											.col-sm-12.col-md-12.m-t-30
+												.alert.alert-success
+													|  #{success_messages}
+										.clearfix
+									if (error_messages.length > 0)
+										.row
+											.col-sm-12.col-md-12.m-t-30
+												.alert.alert-danger
+													| #{error_messages}
+									if (rconconsole_messages.length > 0)
+										.row
+											.col-sm-12.col-md-12.m-t-30
+												.alert.alert-info
+													| #{rconconsole_messages}
+									if (user)
+										if (check_admin == 1)
+											if (results.plugins)
+												if (user.local.user_role >= results.plugins.min_power)
+													if (results.server.name_alias =='cirkus-s-and-d-hc-high-xp')
+														.row
+															.col-md-12.m-b-25.m-t-15
+																a.btn.waves-effect.pull-right.m-r-15.btn.bgm-red(href='/kgb-plugin/'+results.server.id+'/stop', data-toggle="tooltip", data-placement="top", title="", data-original-title="Stop Server")
+																		span.zmdi.zmdi-stop
+																a.btn.waves-effect.pull-right.m-r-15.btn.bgm-orange(href='/kgb-plugin/'+results.server.id+'/restart', data-toggle="tooltip", data-placement="top", title="", data-original-title="Restart Server")
+																		span.zmdi.zmdi-refresh
+																a.btn.waves-effect.pull-right.m-r-15.btn.bgm-lightgreen(href='/kgb-plugin/'+results.server.id+'/start', data-toggle="tooltip", data-placement="top", title="", data-original-title="Start Server")
+																		span.zmdi.zmdi-play
+											.row
+												if ( typeof results.rcon_extra.enable_map_change !== 'undefined' && results.rcon_extra.enable_map_change )
+													if (user.local.user_role >= results.rcon_extra.minimum_power_for_map_change)
+														.col-md-6.m-b-15.m-t-15
+															.col-md-12
+																form(method='post', action='/rconcmd/'+results.server._id+'/changemap')
+																	input(type='hidden', name='rcon_cmd', value="map")
+																	.col-md-6
+																		.fg-line
+																			.select
+																				select.form-control(name='map_name', required)
+																					option(value="") - change map -
+																					each row in results.usermaps
+																						option(value=row.map_name) #{row.display_map_name}
+																	.col-md-6
+																		input(type='hidden', name='_csrf', value=csrfToken)
+																		button.btn.bgm-lightblue.waves-effect(type='submit')
+																			| Go
+												
+												if ( typeof results.rcon_extra.enable_maprotate !== 'undefined' && results.rcon_extra.enable_maprotate )
+													if (user.local.user_role >= results.rcon_extra.minimum_power_for_maprotate)
+														.col-md-3.m-b-15.m-t-15
+															.row
+																.col-md-12.m-b-25
+																	form(method='post', action='/rconcmd/'+results.server._id+'/maprotate')
+																		input(type='hidden', name='rcon_cmd', value="map_rotate")
+																		input(type='hidden', name='_csrf', value=csrfToken)
+																		button.btn.bgm-bluegray.waves-effect(type='submit')
+																			span.zmdi.zmdi-rotate-right
+																			|  Map Rotate
+												
+												if ( typeof results.rcon_extra.enable_screenshot_all !== 'undefined' && results.rcon_extra.enable_screenshot_all )
+													if (user.local.user_role >= results.rcon_extra.minimum_admin_power_for_screenshots)
+														.col-md-3.m-b-15.m-t-15
+															form.pull-right.m-r-15.notificationForm(method='post', action='/rconcmd/'+results.server._id+'/getssall')
+																input(type='hidden', name='rcon_cmd', value="getss all")
+																input(type='hidden', name='notifymessage', class="notifymessage", value="Executed command Getss All on server "+results.server.name)
+																input(type='hidden', name='_csrf', value=csrfToken)
+																button.btn.bgm-bluegray.waves-effect(type='submit', data-toggle="tooltip", data-placement="top", title="", data-original-title="Take a Screenshot off all players on the Server")
+																	span.zmdi.zmdi-camera-party-mode
+																	|  All
+									.table-responsive.no-padding
+										table.table.table-striped
+											thead
+												tr
+													th
+													th Player Name
+													th Score
+													th
+											tbody
+												each row in results.online_players
+													tr
+														td
+															if (user)
+																if (check_admin != 1)
+																	if ( typeof results.rcon_extra.screenshots_for_users_enabled !== 'undefined' && results.rcon_extra.screenshots_for_users_enabled)
+																		form.pull-left.m-r-15(method='post', action='/rconcmd/'+results.server._id+'/getss')
+																			input(type='hidden', name='rcon_cmd', value="getss")
+																			input(type='hidden', name='player_slot', value=row.player_slot)
+																			input(type='hidden', name='rcon_player', value=row.player_name)
+																			input(type='hidden', name='_csrf', value=csrfToken)
+																			button.btn.btn-xs.bgm-bluegray.waves-effect(type='submit', data-toggle="tooltip", data-placement="top", title="", data-original-title="Take a Screenshot off "+row.player_name)
+																				span.zmdi.zmdi-camera
+																if (check_admin == 1)
+																	if ( typeof results.rcon_extra.screenshots_enabled !== 'undefined' && results.rcon_extra.screenshots_enabled )
+																		if (user.local.user_role >= results.rcon_extra.minimum_admin_power_for_screenshots)
+																			form.pull-left.m-r-15(method='post', action='/rconcmd/'+results.server._id+'/getss')
+																				input(type='hidden', name='rcon_cmd', value="getss")
+																				input(type='hidden', name='player_slot', value=row.player_slot)
+																				input(type='hidden', name='rcon_player', value=row.player_name)
+																				input(type='hidden', name='_csrf', value=csrfToken)
+																				button.btn.btn-xs.bgm-bluegray.waves-effect(type='submit', data-toggle="tooltip", data-placement="top", title="", ata-original-title="Take a Screenshot off "+row.player_name)
+																					span.zmdi.zmdi-camera
+																	each left_cmd in results.rcon_cmd_left
+																		if (user.local.user_role >= left_cmd.min_power)
+																			a(data-toggle="modal" data-rconcommand=left_cmd.rcon_command, data-playerslot=row.player_slot, data-playername=row.player_name, class="openmodal pull-left m-r-15 btn btn-xs waves-effect bgm-"+left_cmd.color, data-target="#openrcon", data-remote="false") #{left_cmd.short_name}
+														td
+															|  #{row.player_name}															
+														td
+															span.pull-left
+																| #{row.player_score}
+														td
+															if (user)
+																if (check_admin == 1)
+																	each rigth_cmd in results.rcon_cmd_right
+																		if (user.local.user_role >= rigth_cmd.min_power)
+																			if (rigth_cmd.rcon_command !='tempban')
+																				a(data-toggle="modal" data-rconcommand=rigth_cmd.rcon_command, data-playerslot=row.player_slot, data-playername=row.player_name, class="openmodal pull-left m-l-15 btn btn-xs waves-effect bgm-"+rigth_cmd.color, data-target="#openrcon", data-remote="false") #{rigth_cmd.short_name}
+																			if (rigth_cmd.rcon_command =='tempban')
+																				a(data-toggle="modal" data-rconcommand=rigth_cmd.rcon_command, data-playerslot=row.player_slot, data-playername=row.player_name, class="openmodal pull-left m-l-15 btn btn-xs waves-effect bgm-"+rigth_cmd.color, data-target="#opentempban", data-remote="false") #{rigth_cmd.short_name}
+								#screenshots.tab-pane.animated.fadeIn(role='tabpanel')
+									.pmb-block
+										.pmbb-header
+											h2
+												i.zmdi.zmdi-image.m-r-10
+												|  Screenshots
+											if (user)
+												if (check_admin == 1)
+													if ( user.local.user_role >= results.rcon_extra.minimum_admin_power_for_screenshots)
+														if (server_screenshots.length > 0)
+															ul.actions
+																li.dropdown
+																	a(href='', data-toggle='dropdown')
+																		i.zmdi.zmdi-more-vert
+																	ul.dropdown-menu.dropdown-menu-right
+																		li
+																			a(href='/remove-screenshots/'+results.server._id) Delete All
+									.pmb-block.clearfix.photos
+										.lightbox
+											each screenshot in server_screenshots
+												.col-md-3.col-sm-4.col-xs-6(data-src=screenshot.screenshot_img)
+													.lightbox-item.p-item
+														img.auto-height-gallery(data-googleplus-share-url="/rconcmd/permban/"+screenshot._id, src=screenshot.screenshot_img , alt!=screenshot.player_name+', '+screenshot.map_name+', '+results.server.name)
+										.clearfix
+								#server_rules.tab-pane.animated.fadeIn(role='tabpanel')
+									.card
+										.card-header
+											h2 Server Rules
+												small This are the rules on  #{results.server.name}
+										.card-body.card-padding
+											| !{results.server.server_rules}
+										.clearfix
+	if (user)
+		if (check_admin == 1)
+			#openrcon.modal.fade
+				.modal-dialog
+					.modal-content
+						.modal-header
+							h4.modal-title#rcon_command Rcon Command
+						.modal-body
+							form.m-t-15(method='post', action='/rconcmd/'+results.server._id+'/cmd')
+								#itistempban
+								.fg-line.form-group
+									input.form-control(type='text', name='message', placeholder="msg, reason ...", required)
+								.form-group
+									button.btn.btn-primary.btn-sm(type='submit') Send
+								input(type='hidden', name='player_slot', id="playerId", value="")
+								input(type='hidden', name='rcon_cmd', id="rconId" value="")
+								input(type='hidden', name='rcon_player', id="playerName" value="")
+								input(type='hidden', name='_csrf', value=csrfToken)
+						.modal-footer
+							button.btn.btn-link(type='button', data-dismiss='modal')
+								| Close
+			#opentempban.modal.fade
+				.modal-dialog
+					.modal-content
+						.modal-header
+							h4.modal-title#rcon_command Rcon Command
+						.modal-body
+							form.m-t-15(method='post', action='/rconcmd/'+results.server._id+'/tempban')
+								if ( typeof results.rcon_extra.enable_tempban_duration !== 'undefined' && results.rcon_extra.enable_tempban_duration )
+									.form-group
+										.fg-line
+											.select
+												select.form-control(name='tempbanduration', required)
+													option(value="") - for how long -
+													each row in results.tempbans
+														option(value=row.short_label) #{row.time_number} #{row.long_label}
+								else
+									input(type='hidden', name='tempbanduration', value=results.rcon_extra.default_tempban_time+'m')
+								.form-group
+									.fg-line.form-group
+										input.form-control(type='text', name='message', placeholder="msg, reason ...", required)
+								.form-group
+									button.btn.btn-primary.btn-sm(type='submit') Send
+								input(type='hidden', name='player_slot', id="playerId" value="")
+								input(type='hidden', name='rcon_cmd', id="rconId", value="")
+								input(type='hidden', name='rcon_player', id="playerName" value="")
+								input(type='hidden', name='_csrf', value=csrfToken)
+						.modal-footer
+							button.btn.btn-link(type='button', data-dismiss='modal')
+								| Close
+block extrajs
+	if (user)
+		if (check_admin == 1)
+			if (user.local.user_role >= results.rcon_extra.minimum_admin_power_for_screenshots)
+				script.
+					(function (root, factory) {if (typeof define === 'function' && define.amd) {define(['jquery'], function (a0) {return (factory(a0));});} else if (typeof exports === 'object') {} else {factory(jQuery);}}(this, function ($) {(function() {var defaults = {share: true,facebook: false,facebookDropdownText: 'Facebook',twitter: false,twitterDropdownText: 'Twitter',googlePlus: false,googlePlusDropdownText: 'Report as Cheater',pinterest: true,pinterestDropdownText: 'Permban and Create a Report'};var Share = function(element) {this.core = $(element).data('lightGallery');this.core.s = $.extend({}, defaults, this.core.s);if (this.core.s.share) {this.init();}return this;};Share.prototype.init = function() {var _this = this;var shareHtml = '<span id="lg-share" class="lg-icon zmdi zmdi-thumb-down">' +'<ul class="lg-dropdown" style="position: absolute;">';shareHtml += _this.core.s.facebook ? '<li><a id="lg-share-facebook" target="_blank"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.facebookDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.twitter ? '<li><a id="lg-share-twitter" target="_blank"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.twitterDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.googlePlus ? '<li><a id="lg-share-googleplus" target="_blank"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.googlePlusDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.pinterest ? '<li><a id="lg-share-pinterest"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.pinterestDropdownText + '</span></a></li>' : '';shareHtml += '</ul></span>';this.core.$outer.find('.lg-toolbar').append(shareHtml);this.core.$outer.find('.lg').append('<div id="lg-dropdown-overlay"></div>');$('#lg-share').on('click.lg', function(){_this.core.$outer.toggleClass('lg-dropdown-active');});$('#lg-dropdown-overlay').on('click.lg', function(){_this.core.$outer.removeClass('lg-dropdown-active');});				_this.core.$el.on('onAfterSlide.lg.tm', function(event, prevIndex, index) {setTimeout(function() {$('#lg-share-facebook').attr('href', 'https://www.facebook.com/sharer/sharer.php?u=' + (encodeURIComponent(_this.getSahreProps(index, 'facebookShareUrl') || window.location.href)));$('#lg-share-twitter').attr('href', 'https://twitter.com/intent/tweet?text=' + _this.getSahreProps(index, 'tweetText') + '&url=' + (encodeURIComponent(_this.getSahreProps(index, 'twitterShareUrl') || window.location.href)));var remove_things = encodeURIComponent(_this.getSahreProps(index, 'src')).replace('%2Fimg%2Fscreenshots%2F','');var getpblink = remove_things.replace('.jpg','');$('#lg-share-googleplus').attr('href', '#false' +getpblink);$('#lg-share-pinterest').attr('href', '/rconcmd/permban/' +getpblink);}, 100);});};Share.prototype.getSahreProps = function(index, prop){var shareProp = '';if(this.core.s.dynamic) {shareProp = this.core.s.dynamicEl[index][prop];} else {var _href = this.core.$items.eq(index).attr('href');var _prop = this.core.$items.eq(index).data(prop);shareProp = prop === 'src' ? _href || _prop : _prop;}return shareProp;};Share.prototype.destroy = function() {};$.fn.lightGallery.modules.share = Share;})();}));
+		if (check_admin == 1 && user.local.user_role < results.rcon_extra.minimum_admin_power_for_screenshots)
+			if ( typeof results.rcon_extra.screenshots_for_users_enabled !== 'undefined' && results.rcon_extra.screenshots_for_users_enabled)
+				script.
+					(function (root, factory) {if (typeof define === 'function' && define.amd) {define(['jquery'], function (a0) {return (factory(a0));});} else if (typeof exports === 'object') {module.exports = factory(require('jquery'));} else {factory(jQuery);}}(this, function ($) {(function() {var defaults = {share: true,facebook: false,facebookDropdownText: 'Facebook',twitter: false,twitterDropdownText: 'Twitter',googlePlus: true,googlePlusDropdownText: 'Report as Cheater',pinterest: false,pinterestDropdownText: 'Permban and Create a Report'};var Share = function(element) {this.core = $(element).data('lightGallery');this.core.s = $.extend({}, defaults, this.core.s);if (this.core.s.share) {this.init();}return this;};Share.prototype.init = function() {var _this = this;var shareHtml = '<span id="lg-share" class="lg-icon zmdi zmdi-thumb-down">' +'<ul class="lg-dropdown" style="position: absolute;">';shareHtml += _this.core.s.facebook ? '<li><a id="lg-share-facebook" target="_blank"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.facebookDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.twitter ? '<li><a id="lg-share-twitter" target="_blank"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.twitterDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.googlePlus ? '<li><a id="lg-share-googleplus"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.googlePlusDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.pinterest ? '<li><a id="lg-share-pinterest"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.pinterestDropdownText + '</span></a></li>' : '';shareHtml += '</ul></span>';this.core.$outer.find('.lg-toolbar').append(shareHtml);this.core.$outer.find('.lg').append('<div id="lg-dropdown-overlay"></div>');$('#lg-share').on('click.lg', function(){_this.core.$outer.toggleClass('lg-dropdown-active');});$('#lg-dropdown-overlay').on('click.lg', function(){_this.core.$outer.removeClass('lg-dropdown-active');});_this.core.$el.on('onAfterSlide.lg.tm', function(event, prevIndex, index) {setTimeout(function() {$('#lg-share-facebook').attr('href', 'https://www.facebook.com/sharer/sharer.php?u=' + (encodeURIComponent(_this.getSahreProps(index, 'facebookShareUrl') || window.location.href)));$('#lg-share-twitter').attr('href', 'https://twitter.com/intent/tweet?text=' + _this.getSahreProps(index, 'tweetText') + '&url=' + (encodeURIComponent(_this.getSahreProps(index, 'twitterShareUrl') || window.location.href)));var remove_things = encodeURIComponent(_this.getSahreProps(index, 'src')).replace('%2Fimg%2Fscreenshots%2F','');var getpblink = remove_things.replace('.jpg','');$('#lg-share-googleplus').attr('href', '/report-cheater/' +getpblink);$('#lg-share-pinterest').attr('href', '#false' +getpblink);}, 100);});};Share.prototype.getSahreProps = function(index, prop){var shareProp = '';if(this.core.s.dynamic) {shareProp = this.core.s.dynamicEl[index][prop];} else {var _href = this.core.$items.eq(index).attr('href');var _prop = this.core.$items.eq(index).data(prop);shareProp = prop === 'src' ? _href || _prop : _prop;}return shareProp;};Share.prototype.destroy = function() {};$.fn.lightGallery.modules.share = Share;})();}));
+		if (check_admin == 0)
+			if ( typeof results.rcon_extra.screenshots_for_users_enabled !== 'undefined' && results.rcon_extra.screenshots_for_users_enabled)
+				script.
+					(function (root, factory) {if (typeof define === 'function' && define.amd) {define(['jquery'], function (a0) {return (factory(a0));});} else if (typeof exports === 'object') {module.exports = factory(require('jquery'));} else {factory(jQuery);}}(this, function ($) {(function() {var defaults = {share: true,facebook: false,facebookDropdownText: 'Facebook',twitter: false,twitterDropdownText: 'Twitter',googlePlus: true,googlePlusDropdownText: 'Report as Cheater',pinterest: false,pinterestDropdownText: 'Permban and Create a Report'};var Share = function(element) {this.core = $(element).data('lightGallery');this.core.s = $.extend({}, defaults, this.core.s);if (this.core.s.share) {this.init();}return this;};Share.prototype.init = function() {var _this = this;var shareHtml = '<span id="lg-share" class="lg-icon zmdi zmdi-thumb-down">' +'<ul class="lg-dropdown" style="position: absolute;">';shareHtml += _this.core.s.facebook ? '<li><a id="lg-share-facebook" target="_blank"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.facebookDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.twitter ? '<li><a id="lg-share-twitter" target="_blank"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.twitterDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.googlePlus ? '<li><a id="lg-share-googleplus"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.googlePlusDropdownText + '</span></a></li>' : '';shareHtml += _this.core.s.pinterest ? '<li><a id="lg-share-pinterest"><span class="lg-icon"></span><span class="lg-dropdown-text">' + this.core.s.pinterestDropdownText + '</span></a></li>' : '';shareHtml += '</ul></span>';this.core.$outer.find('.lg-toolbar').append(shareHtml);this.core.$outer.find('.lg').append('<div id="lg-dropdown-overlay"></div>');$('#lg-share').on('click.lg', function(){_this.core.$outer.toggleClass('lg-dropdown-active');});$('#lg-dropdown-overlay').on('click.lg', function(){_this.core.$outer.removeClass('lg-dropdown-active');});_this.core.$el.on('onAfterSlide.lg.tm', function(event, prevIndex, index) {setTimeout(function() {$('#lg-share-facebook').attr('href', 'https://www.facebook.com/sharer/sharer.php?u=' + (encodeURIComponent(_this.getSahreProps(index, 'facebookShareUrl') || window.location.href)));$('#lg-share-twitter').attr('href', 'https://twitter.com/intent/tweet?text=' + _this.getSahreProps(index, 'tweetText') + '&url=' + (encodeURIComponent(_this.getSahreProps(index, 'twitterShareUrl') || window.location.href)));var remove_things = encodeURIComponent(_this.getSahreProps(index, 'src')).replace('%2Fimg%2Fscreenshots%2F','');var getpblink = remove_things.replace('.jpg','');$('#lg-share-googleplus').attr('href', '/report-cheater/' +getpblink);$('#lg-share-pinterest').attr('href', '#false' +getpblink);}, 100);});};Share.prototype.getSahreProps = function(index, prop){var shareProp = '';if(this.core.s.dynamic) {shareProp = this.core.s.dynamicEl[index][prop];} else {var _href = this.core.$items.eq(index).attr('href');var _prop = this.core.$items.eq(index).data(prop);shareProp = prop === 'src' ? _href || _prop : _prop;}return shareProp;};Share.prototype.destroy = function() {};$.fn.lightGallery.modules.share = Share;})();}));
+	if (user)
+		if (notify_messages.length > 0)
+			script(type='text/javascript').
+				function notify(from, align, icon, type, animIn, animOut){$.growl({icon: icon,title: ' <h3 class="alert-header">Success!</h3> ',message: '#{notify_messages}',url: ''},{element: 'body',type: 'success',allow_dismiss: false,placement: {from: 'bottom',align: 'right'},offset: {x: 20,y: 85},spacing: 10,z_index: 1031,delay: 2500,timer: 1000,url_target: '_blank',mouse_over: false,animate: {enter: 'animated fadeInRight',exit: 'animated fadeOutRight'},icon_type: 'class',template: '<div data-growl="container" class="alert" role="alert">' +'<button type="button" class="close" data-growl="dismiss">' +'<span aria-hidden="true">&times;</span>' +'<span class="sr-only">Close</span>' +'</button>' +'<span data-growl="icon"></span>' +'<span data-growl="title"></span>' +'<span data-growl="message"></span>' +'<a href="#" data-growl="url"></a>' +'</div>'});}window.onload=(function(e) {e.preventDefault();var nFrom = $(this).attr('data-from');var nAlign = $(this).attr('data-align');var nIcons = $(this).attr('data-icon');var nType = $(this).attr('data-type');var nAnimIn = $(this).attr('data-animation-in');var nAnimOut = $(this).attr('data-animation-out');notify(nFrom, nAlign, nIcons, nType, nAnimIn, nAnimOut);});
+		script(type='text/javascript').
+			$(document).on("click",".openmodal",function(){var rconId = $(this).data('rconcommand');$(".modal-body #rconId").val( rconId );var playerslotId = $(this).data('playerslot');$(".modal-body #playerId").val( playerslotId );var playerNameId = $(this).data('playername');$(".modal-body #playerName").val( playerNameId );});

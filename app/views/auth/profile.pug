@@ -1,0 +1,158 @@
+extends ../layout/home
+
+block content
+	
+		ol.breadcrumb
+			li
+				a(href='/') Home
+			li.active Connect Accounts
+		section#content
+			.container.container-alt
+				.block-header
+					h2 Connect Accounts
+						small Connect with Us
+				#profile-main.card
+					.pm-overview.c-overflow
+						.pmo-pic
+							.p-relative
+								a(href='#')
+									img.img-responsive(src=user.local.avatar_512, alt='img')
+									a.pmop-edit(data-toggle="modal", href="#modalColor", data-target-color="blue")
+										i.zmdi.zmdi-camera
+										span.hidden-xs Change Avatar
+							.pmo-stat
+								h2.m-0.c-white #{user.local.user_role}
+								| User Power (Maximum 100)
+					.pm-body.clearfix
+						.pmb-block
+							.pmbb-header
+								h2
+									i.zmdi.zmdi-assignment-account.m-r-10
+									|  Connect all your customer accounts here
+							.row
+								.col-md-12
+									.m-b-25
+										| If you have multiple user accounts (Local, Facebook, Google ...), you can link them together. You do not have to sign out, in every time
+										| to hold your admin rights. Or for example you forgott your password for the local account, no problem you can still login with Google,
+										| Facebook ...
+								.row
+									.col-md-12
+										.card
+											.card-header
+												h2
+													i.zmdi.zmdi-account
+													|  Local Account
+													if (user.local.email)
+														small Remove Local Account here
+													else
+														small Create a Local Account here
+											.card-body.card-padding
+												if (user.local.email)
+													a.btn.btn-default(href='#', disabled='disabled')
+														i.zmdi.zmdi-account
+														|  Remove Account
+												else
+													a.btn.btn-default(href='/user/connect/local')
+														i.zmdi.zmdi-account-add
+														|  Create Account
+								if (results.ssoauth.length > 0)
+
+									.row
+										each row in results.ssoauth
+											if (row.name_alias=='sso-steam')
+												.col-md-4
+													.card
+														.card-header
+															h2
+																i.zmdi.zmdi-steam
+																|  Steam Account
+																if (user.steam.id)
+																	small Remove Steam Account here
+																else
+																	small Link, Steam Account here
+														.card-body.card-padding
+															if (user.steam.id)
+																a.btn.bgm-black(href='/user/unlink/steam')
+																	i.zmdi.zmdi-delete
+																	|  Remove Steam
+															else
+																a.btn.bgm-black(href='/user/connect/steam')
+																	i.zmdi.zmdi-steam
+																	|  Link Steam
+											if (row.name_alias=='sso-facebook')
+												.col-md-4
+													.card
+														.card-header
+															h2
+																i.zmdi.zmdi-facebook
+																|  Facebook Account
+																if (user.facebook.token)
+																	small Remove Facebook Account here
+																else
+																	small Link, Facebook Account here
+														.card-body.card-padding
+															if (user.facebook.token)
+																a.btn.bgm-indigo(href='/user/unlink/facebook')
+																	i.zmdi.zmdi-delete
+																	|  Remove Facebook
+															else
+																a.btn.bgm-indigo(href='/user/connect/facebook')
+																	i.zmdi.zmdi-facebook
+																	|  Link Facebook
+											if (row.name_alias=='sso-google')
+												.col-md-4
+													.card
+														.card-header
+															h2
+																i.zmdi.zmdi-google-plus
+																|  Google+ Account
+																if (user.google.token)
+																	small Remove Google+ Account here
+																else
+																	small Link, Google+ Account here
+														.card-body.card-padding
+															if (user.google.token)
+																a.btn.bgm-red(href='/user/unlink/google')
+																	i.zmdi.zmdi-delete
+																	|  Remove Google+
+															else
+																a.btn.bgm-red(href='/user/connect/google')
+																	i.zmdi.zmdi-google-plus
+																	|  Link Google+
+											if (row.name_alias=='sso-twitter')
+												.col-md-4
+													.card
+														.card-header
+															h2
+																i.zmdi.zmdi-twitter
+																|  Twitter Account
+																if (user.twitter.token)
+																	small Remove Twitter Account here
+																else
+																	small Link, Twitter Account here
+														.card-body.card-padding
+															if (user.twitter.token)
+																a.btn.bgm-lightblue(href='/user/unlink/twitter')
+																	i.zmdi.zmdi-delete
+																	|  Remove Twitter
+															else
+																a.btn.bgm-lightblue(href='/user/connect/twitter')
+																	i.zmdi.zmdi-twitter
+																	|  Link Twitter
+				#modalColor.modal.fade(aria-hidden='true')
+					.modal-dialog
+						.modal-content
+							.modal-header
+								button.close(type='button', data-dismiss='modal') ×
+								h4.modal-title Change Your profile Image
+							.modal-body
+								form#uploadForm(enctype='multipart/form-data', action='/user/upload?_csrf='+csrfToken, method='post')
+									.m-t-30
+									input(type='file', name='userPhoto')
+									.m-t-30
+									a.btn.btn-sm.btn-danger.pull-right(href='/user/delete-avatar') Delete Avatar
+									button.btn.btn-sm.btn-primary(type='submit', name='submit') Change Avatar
+									
+							.modal-footer
+								button.btn.btn-link(type='button', data-dismiss='modal')
+									| Close

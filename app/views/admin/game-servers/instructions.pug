@@ -1,0 +1,78 @@
+extends ../../layout/home
+
+block content
+		ol.breadcrumb
+			li
+				a(href='/') Home
+			li
+				a(href='/admin/home') Admin
+			li.active Instructions for Server Managment
+		section#content
+			.container.container-alt
+				.text-center
+				h2.f-400 Support - Server Managment
+				.clearfix
+				.row.m-t-25
+					.card
+						.card-header.bgm-deeporange
+							h2
+								| Instructions for Server Managment
+								small
+									| Questions and Answers Server Managment
+						.card-body.card-padding
+							.panel-group(role='tablist', aria-multiselectable='true')
+									.panel.panel-collapse
+										#headingOne.panel-heading(role='tab')
+											h4.panel-title
+												a.collapsed(data-toggle='collapse', data-parent='#accordion', href='#1', aria-expanded='false', aria-controls='1')
+													| Required Access
+										div.collapse(id='1', role='tabpanel', aria-labelledby='headingOne')
+											.panel-body
+												p
+													| In order to use Server Managment it is important to have an SFTP and SSH access to the game Server
+									.panel.panel-collapse
+										#headingOne.panel-heading(role='tab')
+											h4.panel-title
+												a.collapsed(data-toggle='collapse', data-parent='#accordion', href='#2', aria-expanded='false', aria-controls='1')
+													| Do not run Server manager as root user
+										div.collapse(id='2', role='tabpanel', aria-labelledby='headingOne')
+											.panel-body
+												p
+													| Make sure you create a new user, in my example i will call the new user "cod4server". Run the next command via putty as root User
+													pre
+														| # adduser cod4server
+													pre
+														| # passwd mysupersecretpassword
+									.panel.panel-collapse
+										#headingOne.panel-heading(role='tab')
+											h4.panel-title
+												a.collapsed(data-toggle='collapse', data-parent='#accordion', href='#3', aria-expanded='false', aria-controls='1')
+													| Change the file with your parameters (/app/config/config.json)
+										div.collapse(id='3', role='tabpanel', aria-labelledby='headingOne')
+											.panel-body
+												p
+													| Locate next lines in config.json and change them with your parameters
+													pre
+														| "ssh_access": {
+														| 	"host" : "server_ip",
+														| 	"user" : "cod4server",
+														| 	"password" : "mysupersecretpassword"
+														| },
+														| 
+														| "cod4_server_plugin": {
+														| 	"download_link" : "http://files.linuxgsm.com/CallOfDuty4/cod4x18_dedrun.tar.bz2",
+														| 	"servers_root" : "/home/cod4server"
+														| }
+												br
+												br
+												| The download link should work, this will download for us the server files and an outdated cod4x bin file, you can change it later to the latest version
+									.panel.panel-collapse
+										#headingOne.panel-heading(role='tab')
+											h4.panel-title
+												a.collapsed(data-toggle='collapse', data-parent='#accordion', href='#4', aria-expanded='false', aria-controls='1')
+													| Get the Server Files
+										div.collapse(id='4', role='tabpanel', aria-labelledby='headingOne')
+											.panel-body
+												p
+													| If all changes are made in previous steps then click on the link Get Server Files on the Admin Homepage. This will download all the cod4 server files required to run the server to your cod4server root, it take some time to download this files (about 4GB). So click it and check if u have a new directory called main_cod4_server_files
+				.clearfix

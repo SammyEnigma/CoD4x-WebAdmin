@@ -1,0 +1,158 @@
+extends ../../layout/home
+
+block content
+	section#content
+		.container
+			.block-header
+				h2
+					i.zmdi.zmdi-apps
+					|  #{websitename}
+			.row
+				.col-md-9.col-sm-6
+					include ../../partials/adsense.pug
+					if (success_messages.length > 0)
+						.row
+							.col-sm-12.col-md-12.m-t-30
+								.alert.alert-success
+									| #{success_messages}
+					if (error_messages.length > 0)
+						.row
+							.col-sm-12.col-md-12.m-t-30
+								.alert.alert-danger
+									| #{error_messages}
+					if (user)
+						if (results.checkshoutboxdisplay)
+							if (user.local.user_role >= results.checkshoutboxdisplay.min_power)
+								.card
+									.card-header.ch-alt
+										h2
+											span.zmdi.zmdi-comments.m-r-5
+											| Shoutbox for Our Members
+											small Required Power to use Shoutbox (
+												span.c-blue #{results.checkshoutboxdisplay.min_power}
+												| )
+										if (user.local.user_role > 99)
+											ul.actions
+												li
+													a(href='/admin/shoutbox/delete-all')
+														i.zmdi.zmdi-delete
+									.card-body
+										.pre-scrollable.p-15#shoutbox
+											each message in results.shoutbox.reverse()
+												.mblm-item.mblm-item-left.w-100
+													a.pull-left.m-r-15(href='/members/'+message.shout_user_id)
+														img.lgi-img(src=message.shout_user_avatar, alt='avatar')
+													div
+														strong
+															| #{message.shout_user_name}
+														span.small.p-l-10.c-gray
+															| #{moment(message.createdAt).fromNow()}
+														span!=message.shout_user_msg
+										.row
+											.col-md-12.m-t-10.m-b-10
+												form(id='messageForm')
+													.input-group.p-10
+														.fg-line
+															input.form-control(id='message', type='text', placeholder='Type a message...', autocomplete="off", required)
+														.input-group-btn
+															button.btn.bgm-lightblue.m-l-5#send(type='submit')
+																i.zmdi.zmdi-mail-send
+												.small.typing.p-l-15.p-b-15#typing
+					.row
+						each row in results.servers
+							.col-sm-6.col-md-4.animated.flipInX.forum-categories-block
+								.card
+									.card-header.forum-categories-block-header(class="bgm-"+row.color)
+										h2
+											a(href="/"+row.name_alias)
+												i(class='m-r-5 flag-icon flag-icon-'+row.country_shortcode)
+												|  #{row.name}
+											small
+												span.zmdi.zmdi-accounts 
+												|  Online Players #{row.online_players}
+												br
+												span.zmdi.zmdi-globe
+												|  #{row.ip}:#{row.port}
+												br
+												span.zmdi.zmdi-pin
+												|  Map #{row.map_playing}
+										a.bgm-lightblue.btn.btn-default.bg.btn-float.waves-effect.waves-circle.waves-float(href="/"+row.name_alias)
+											i.zmdi.zmdi-plus
+									.card-body.forum-categories-block-body.card-padding
+										span.lgi-heading.pull-left.m-r-5
+											span.zmdi.zmdi-refresh
+										small.lgi-text
+											if (row.is_online === true && row.count_connection_fail==0)
+												span.c.green Online
+											else if (row.is_online === false && row.count_connection_fail <= 3)
+												span.c-orange Last Scan Failed
+											else
+												span.c-red Server Offline
+											|  Scanned #{moment(row.updatedAt).fromNow()}
+				.col-md-3.col-sm-6
+					if (user)
+						if (user.local.user_role < 2)
+							.card
+								.card-header.bgm-lightblue
+									h2
+										| Admin Applications
+										small Apply for Admin Rights Here
+									a.bgm-lightgreen.btn.btn-default.bg.btn-float.waves-effect.waves-circle.waves-float(href="/admin-applications")
+										i.zmdi.zmdi-comment-more
+								.card-body.card-padding
+									| You want to help out on our servers? Then write an admin application here!
+						if (user.local.user_role > 1)
+							if (results.adminconversations > 0)
+								.card
+									.card-body.card-padding.bgm-pink.c-white
+										a.c-white(href="/admin-conversations") 
+											span.zmdi.zmdi-info
+											|  New Admin Conversation is Started! Help Us to make the right Decision!
+					.card
+						.card-header
+							h2
+								| Admin Actions
+								small Latest Admin actions on Server(s)
+						.card-body
+							.list-group
+								each action in results.adminactions
+									a.list-group-item.media.animated.zoomIn(href='/members/'+action.rcon_admin._id)
+										.pull-left
+											img.lgi-img(src=action.rcon_admin.local.avatar_60, alt='avatar', data-toggle="tooltip", data-placement="top", title="", data-original-title=action.rcon_admin.local.user_name)
+										.media-body
+											.lgi-heading
+												span(class="btn btn-circle m-r-15 btn-xs bgm-"+action.rcon_command.color)
+													| #{action.rcon_command.short_name}
+												| #{action.player_name}
+											ul.lgi-attrs
+												li
+													| #{action.rcon_server.name}
+												li
+													| #{moment(action.createdAt).fromNow()}
+					.card
+						.card-header
+							h2
+								| Latest PermBanns
+								small Latest Server Bans made by our Admins
+						.card-body
+							.list-group
+								each ban in results.serverbans
+									a.list-group-item.media.animated.zoomIn(href='/banlist/'+ban._id)
+										.pull-left
+											img.lgi-img(src=ban.player_screenshot, alt='img', data-toggle="tooltip", data-placement="top", title="", data-original-title=ban.player_name_alias)
+										.media-body
+											.lgi-heading
+												span(class="btn btn-circle m-r-15 btn-xs bgm-red")
+													| PB
+												| #{ban.player_name}
+											ul.lgi-attrs
+												li
+													| by admin #{ban.rcon_admin.local.user_name}
+												li
+													| #{moment(ban.createdAt).fromNow()}
+block extrajs
+	if (user)
+		if (results.checkshoutboxdisplay)
+			script(src='/js/markdown-it.min.js')
+			script.
+				function scrollToBottom() {$('#shoutbox').scrollTop($('#shoutbox')[0].scrollHeight);}scrollToBottom();

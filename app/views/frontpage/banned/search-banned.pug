@@ -1,0 +1,58 @@
+extends ../../layout/home
+
+block content
+	ol.breadcrumb
+		li
+			a(href='/') Home
+		li.active Banned Players
+	section#content
+		.container.container-alt
+			include ../../partials/adsense.pug
+			.block-header
+				h2
+					| Banned Players
+					small List of banned players on our servers - #{webname}
+			.card
+				.action-header.clearfix
+					.ah-label.hidden-xs Click the search icon on the right side to search banned players
+					form.ah-search(method='get', action='/banlist/search')
+						input.ahs-input(type='text', name='sq' placeholder='Search banned players, enter guid or playername')
+						i.ahs-close(data-ma-action='action-header-close') ×
+					ul.actions
+						li
+							a(href='', data-ma-action='action-header-open')
+								i.zmdi.zmdi-search
+				.card-body.card-padding
+					.contacts.clearfix.row
+						if (success_messages.length > 0)
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-success
+										| #{success_messages}
+						if (error_messages.length > 0)
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-danger
+										| #{error_messages}
+						if (results.serverban < 1 )
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-info
+										| Sry, no such player or guid found
+					each ban in results.serverbans.docs
+						span.list-group-item.media.animated.zoomIn
+							.pull-left
+								a(href='/banlist/'+ban._id)
+									img.lgi-img(src=ban.player_screenshot, alt='img', data-toggle="tooltip", data-placement="top", title="", data-original-title=ban.player_name_alias)
+							.media-body
+								.lgi-heading
+									span(class="btn btn-circle m-r-15 btn-xs bgm-red")
+										| PermBan
+									a(href='/banlist/'+ban._id) #{ban.player_name}
+								ul.lgi-attrs
+									li 
+										a(href="/"+ban.rcon_server.name_alias) #{ban.rcon_server.name}
+									li
+										| #{moment(ban.createdAt).fromNow()}
+									li
+										a(href="/members/"+ban.rcon_admin._id) #{ban.rcon_admin.local.user_name}

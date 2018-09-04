@@ -1,0 +1,82 @@
+extends ../layout/home
+
+block content
+	
+		ol.breadcrumb
+			li
+				a(href='/') Home
+			li.active Sign Up
+		section#content
+			.container
+				.row
+					.col-md-4.col-md-offset-3
+						.card
+							.card-header.bgm-blue
+								h2
+									| Sign Upn 
+									small Create an Account
+								button.btn.bgm-green.btn-float.waves-effect
+									i.zmdi.zmdi-account-add
+							.card-body.card-padding
+								if (message.length > 0)
+									.alert.alert-danger=message
+								if (captcha)
+									form(method='post', action='/user/signup')
+										input(type='hidden', name='_csrf', value=csrfToken)
+										.form-group.fg-line
+											label(for='username')
+												i.zmdi.zmdi-account
+												|  Username
+											input#username.form-control.input-sm(type='text', placeholder='Enter Username here', name='user_name')
+										.form-group.fg-line
+											label(for='email')
+												i.zmdi.zmdi-account
+												|  Email
+											input#email.form-control.input-sm(type='text', placeholder='Enter Email here', name='email')
+										.row
+											.col-sm-6.m-b-20
+												.form-group.fg-line
+													label(for='password')
+														i.zmdi.zmdi-lock
+														|  Password
+													input#password.form-control.input-sm(type='password', placeholder='Enter Password here', name='password')
+											.col-sm-6.m-b-20
+												.form-group.fg-line
+													label(for='confirmPassword')
+														i.zmdi.zmdi-lock
+														|  Confirm Password
+													input#confirmPassword.form-control.input-sm(type='password', placeholder='Confirm Password here', name='confirmPassword')
+										.row
+											.col-md-12.text-center.m-b-25
+												| !{captcha}
+										.row
+											.col-sm-3.m-b-20
+												button.btn.btn-primary.waves-effect(type='submit') Register
+											.col-sm-9.m-b-20
+												a(href='/user/login')  Login Here if you already have an Account
+								else
+									if (error)
+										div(style="color:red") Error : #{error}
+									else
+										div(style="color:green") Data : #{data}
+									a(href="/user/signup") Retry
+								.clearfix
+								if (results.length > 0)
+									.col-sm-12-m-t-20.text-center
+										h5 Or Login with
+									hr
+									.col-sm-12-m-t-20.btn-demo.text-center
+										each row in results
+											if (row.name_alias=='sso-facebook')
+												a.btn.bgm-indigo.btn-icon.waves-effect.waves-circle.waves-float(href='/user/auth/facebook')
+													span.zmdi.zmdi-facebook
+											if (row.name_alias=='sso-google')
+												a.btn.bgm-red.btn-icon.waves-effect.waves-circle.waves-float(href='/user/auth/google')
+													span.zmdi.zmdi-google-plus
+											if (row.name_alias=='sso-twitter')
+												a.btn.bgm-lightblue.btn-icon.waves-effect.waves-circle.waves-float(href='/user/auth/twitter')
+													span.zmdi.zmdi-twitter
+											if (row.name_alias=='sso-steam')
+												a.btn.bgm-black.btn-icon.waves-effect.waves-circle.waves-float(href='/user/auth/steam')
+													span.zmdi.zmdi-steam
+									.clearfix

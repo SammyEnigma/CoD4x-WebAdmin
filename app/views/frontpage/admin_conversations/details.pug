@@ -1,0 +1,74 @@
+extends ../../layout/home
+
+block content
+	ol.breadcrumb
+		li
+			a(href='/') Home
+		li
+			a(href="/admin-conversations") Admin Conversations
+		li.active Admin Conversation for Admin Application made by #{results.adminconversations.sender_id.local.user_name}
+	section#content
+		.container.container-alt
+			.block-header
+				h2
+					| Admin Conversations
+					small Help Us to make the right Decision!
+			.row.wall
+				.col-md-8
+					.card.w-item
+						.card-header
+							.media
+								.pull-left
+									img.avatar-img(src=results.adminconversations.sender_id.local.avatar_60, alt=results.adminconversations.sender_id.local.user_name)
+								.media-body
+									h2
+										| #{results.adminconversations.sender_id.local.user_name}
+										small Admin Application sent #{moment(results.adminconversations.app_id.createdAt).fromNow()}
+						.card-body.card-padding
+							if (success_messages.length > 0)
+									.row
+										.col-sm-12.col-md-12.m-t-30
+											.alert.alert-success
+												| #{success_messages}
+							if (error_messages.length > 0)
+								.row
+									.col-sm-12.col-md-12.m-t-30
+										.alert.alert-danger
+											| #{error_messages}
+							p
+								| Age: 
+								span.c-blue #{results.adminconversations.app_id.age}
+								br
+								| Cheater Reports: 
+								span.c-blue #{reports}
+							p
+								| #{results.adminconversations.app_id.adminappmessage}
+							.wi-stats.clearfix
+								.wis-numbers
+									span
+										i.zmdi.zmdi-comments
+										|  #{results.adminconversationscomments.length}
+						.wi-comments
+							if (results.adminconversationscomments)
+								.list-group
+									each comment in results.adminconversationscomments
+										.list-group-item.media
+											a.pull-left(href='/members/'+comment.sender_id._id)
+												img.lgi-img(src=comment.sender_id.local.avatar_60, alt=comment.sender_id.local.user_name)
+											.media-body
+												a.lgi-heading(href='')
+													| #{comment.sender_id.local.user_name} 
+													small.c-gray.m-l-10 
+														| #{moment(comment.createdAt).fromNow()} ...
+												small.lgi-text
+													| #{comment.message}
+							.wic-form
+								form(method='post', action='/admin-conversations/conversation/new/save')
+									textarea(placeholder='What do you think, should we accept '+results.adminconversations.sender_id.local.user_name+' as Server(s) Admin', data-ma-action='wall-comment-open', name="message", required)
+									.wicf-actions.text-right
+										input(type='hidden', name='conversation_id', value=results.adminconversations._id)
+										input(type='hidden', name='app_id', value=results.adminconversations.app_id._id)
+										input(type='hidden', name='app_sender_id', value=results.adminconversations.app_id._id)
+										input(type='hidden', name='_csrf', value=csrfToken)
+										button.btn.btn-sm.btn-link(data-ma-action='wall-comment-close') Cancel
+										button.btn.btn-sm.btn-primary(type="submit") Send

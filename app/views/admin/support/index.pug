@@ -1,0 +1,43 @@
+extends ../../layout/home
+
+block content
+		ol.breadcrumb
+			li
+				a(href='/') Home
+			li
+				a(href='/admin/home') Admin
+			li.active Support
+		section#content
+			.container.container-alt
+				.row
+					.col-md-12
+						if (success_messages.length > 0)
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-success
+										| #{success_messages}
+						if (error_messages.length > 0)
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-danger
+										| #{error_messages}
+						.row
+							.card
+								.card-header
+									h2 Support
+										small Manage support content here
+									a.btn.bgm-green.btn-float.waves-effect(href='/admin/support/new', data-toggle="tooltip" data-placement="top" title="" data-original-title="Ad New")
+										i.zmdi.zmdi-plus
+								.table-responsive.m-t-20
+									table.table.table-striped.m-t-20.m-b-20
+										tbody
+											each row in results
+												tr
+													td
+														strong
+															| #{row.category} - 
+														a(href='/admin/support/edit/'+row._id)
+															| #{row.question}
+													td.text-right
+														a.btn.btn-danger.btn-xs(href='/admin/support/delete/'+row._id) Delete
+

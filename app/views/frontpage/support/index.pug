@@ -1,0 +1,56 @@
+extends ../../layout/home
+
+block content
+	ol.breadcrumb
+		li
+			a(href='/') Home
+		li.active Support
+	section#content
+		.container.container-alt
+			include ../../partials/adsense.pug
+			.text-center
+				h2.f-400 Support - Frequently asked questions (FAQ) 
+			.clearfix
+			.row.m-t-25
+				.card
+					.card-header.bgm-indigo
+						h2
+							| Frequently asked questions (FAQ) 
+							small
+								| Questions and Answers for FAQ
+					.card-body.card-padding
+						.panel-group(role='tablist', aria-multiselectable='true')
+							- var $a=0
+							- var $b=0
+							- var $c=0
+							each row in results.faq
+								.panel.panel-collapse
+									#headingOne.panel-heading(role='tab')
+										h4.panel-title
+											a.collapsed(data-toggle='collapse', data-parent='#accordion', href='#o'+$a++, aria-expanded='false', aria-controls='o'+$b++)
+												| #{row.question}
+									div.collapse(id='o'+$c++, role='tabpanel', aria-labelledby='headingOne')
+										.panel-body
+											| !{row.answer}
+			.row.m-t-25
+				.card
+					.card-header.bgm-lightgreen
+						h2
+							| Admin Commands
+							small
+								| Questions and Answers for Admin Commands
+					.card-body.card-padding
+						.panel-group(role='tablist', aria-multiselectable='true')
+							- var $d=0
+							- var $e=0
+							- var $f=0
+							each row in results.admin_commands
+								.panel.panel-collapse
+									#headingOne.panel-heading(role='tab')
+										h4.panel-title
+											a.collapsed(data-toggle='collapse', data-parent='#accordion', href='#ot'+$d++, aria-expanded='false', aria-controls='ot'+$e++)
+												| #{row.question}
+									div.collapse(id='ot'+$f++, role='tabpanel', aria-labelledby='headingOne')
+										.panel-body
+											| !{row.answer}
+			.clearfix

@@ -1,0 +1,75 @@
+extends ../../layout/home
+
+block content
+	ol.breadcrumb
+		li
+			a(href='/') Home
+		li.active Admin Applications
+	section#content
+		.container.container-alt
+			.row
+				.col-md-8
+					.card
+						.card-header
+							h2 Admin Application Form
+								small
+									|  Please write in English
+						.card-body.card-padding
+							if (success_messages.length > 0)
+								.row
+									.col-sm-12.col-md-12.m-b-30
+										.alert.alert-success
+											| #{success_messages}
+							if (error_messages.length > 0)
+								.row
+									.col-sm-12.col-md-12.m-b-30
+										.alert.alert-danger
+											| #{error_messages}
+							if (results.total_cheater_reports < results.requiredpower.minimum_cheater_reports)
+								.row
+									.col-sm-12.col-md-12.m-b-30
+										.alert.alert-danger
+											strong You have #{results.total_cheater_reports} Cheater Reports!
+											|  At least #{results.requiredpower.minimum_cheater_reports} cheater reports are required to send an Admin Application
+										.m-t-25
+											| Instructions for Cheater Reports and Screenshots can be found on our 
+											a(href="/support") Support
+											|  Pages
+							if (results.total_cheater_reports >= results.requiredpower.minimum_cheater_reports)
+								if ( typeof user.steam.id !== 'undefined' && user.steam.id)
+									form.notificationForm(method='post', action='/admin-applications')
+										.col-md-4
+											.form-group.fg-line
+												input.form-control.input-sm(type='text', name='age', placeholder="Age", required)
+										.col-md-12
+											.form-group.fg-line
+												textarea.form-control.input-sm(placeholder='Why should we accept you as Admin? (Don\'t say you hate cheaters)', rows='15' name='adminappmessage', required)
+										.col-md-12.text-right
+											input(type='hidden', name='notifymessage', class="notifymessage", value="Sent a New Admin Application")
+											input(type='hidden', name='_csrf', value=csrfToken)
+											button.btn.btn-primary.waves-effect(type='submit') Send Admin Application
+								else
+									.alert.alert-danger
+										strong Denied!
+										|  You have not linked your Steam Account, Link your Steam via your 
+										a.alert-link(href="/user/profile") Profile page
+								
+								.clearfix
+				.col-md-4
+					.card
+						.card-header
+							h2
+								| Requirements
+								small Requirements to become Admin on our Game Servers
+						.card-body.card-padding
+							ul.clist.clist-star
+								li 18 years or older
+								li Decent playtime on servers
+								li Decent English
+								li No application in the past month
+								li At least 
+									span.c-red 5 Cheater Reports
+								li Installed Steam Application
+								li Linked Steam on your 
+									a(href="/user/profile") Profile page
+								li Do not re-apply right after you got declined

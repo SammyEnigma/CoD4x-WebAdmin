@@ -1,0 +1,41 @@
+extends ../../layout/home
+
+block content
+		ol.breadcrumb
+			li
+				a(href='/') Home
+			li
+				a(href='/admin/home') Admin
+			li
+				a(href='/admin/support') Support
+			li.active Edit
+		section#content
+			.container.container-alt
+				.row
+					.col-md-12
+						.card
+							.card-header.bgm-blue
+								h2 Support
+									small Edit support
+							.card-body.card-padding
+								form(method='post', action='/admin/support/edit/update/'+results._id)
+									.form-group
+										.fg-line
+											.select
+												select.form-control(name='category', required)
+													option(value=results.category) #{results.category}
+													option(value='FAQ') FAQ
+													option(value='Admin Commands') Admin Commands
+									.form-group.fg-line
+										label(for='question')
+											|  Question
+										input#question.form-control.input-sm(type='text', name='question', value=results.question)
+									.form-group.fg-line
+										label(for='answer')
+											|  Answer the question here
+										textarea#answer.form-control.input-sm.html-editor(rows='15' name='answer', required)
+											| #{results.answer}
+									.col-sm-12.m-b-20.text-right
+										input(type='hidden', name='_csrf', value=csrfToken)
+										button.btn.btn-primary.waves-effect(type='submit') Edit
+								.clearfix

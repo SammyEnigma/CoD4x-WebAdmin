@@ -1,0 +1,47 @@
+extends ../../layout/home
+
+block content
+	ol.breadcrumb
+		li
+			a(href='/') Home
+		li.active Memebers
+	section#content
+		.container.container-alt
+			include ../../partials/adsense.pug
+			.block-header
+				h2
+					| Members
+					small Registered users on #{websitename}
+			.card
+				.card-header
+					h2 List of registered Members
+						small Curently #{results.users.length} registered Members
+				.card-body.card-padding
+					.contacts.clearfix.row
+						if (success_messages.length > 0)
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-success
+										| #{success_messages}
+						if (error_messages.length > 0)
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-danger
+										| #{error_messages}
+						.row
+							.col-sm-12.col-md-12.m-t-30
+								ul#users-container.users-container
+									each row in results.users
+										li.users-box.registered-user(data-uid='14')
+											a(href='/members/'+row._id)
+												img.user-picture(src=row.local.avatar_512, alt='img')
+											br
+											.user-info
+												div
+													i.status.offline(component='user/status', title='Offline')
+													a(href='/members/'+row._id)  #{row.local.user_name}
+												.joindate(title='Seen')
+													i.fa.fa-clock
+													span
+														| #{moment(row.updatedAt).fromNow()}
+								.clearfix

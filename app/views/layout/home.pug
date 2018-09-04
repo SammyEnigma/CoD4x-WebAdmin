@@ -1,0 +1,215 @@
+doctype html
+html(lang='en')
+	//if IE 7
+		<html class="ie">
+	head
+		meta(charset='UTF-8')
+		meta(http-equiv='X-UA-Compatible', content='IE=edge')
+		meta(name='viewport', content='width=device-width')
+		link(rel='shortcut icon', href='/favicon.ico')
+		title= title+' - '+websitename
+		link(rel='stylesheet', href='/vendors/bower_components/animate.css/animate.min.css')
+		link(rel='stylesheet', href='/vendors/bower_components/lightgallery/dist/css/lightgallery.min.css')
+		link(rel='stylesheet', href='/vendors/bower_components/material-design-iconic-font/dist/css/material-design-iconic-font.min.css')
+		link(rel='stylesheet', href='/vendors/bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css')
+		link(rel='stylesheet', href='/vendors/bower_components/bootstrap-select/dist/css/bootstrap-select.css')
+		link(rel='stylesheet', href='/css/app_1.min.css')
+		link(rel='stylesheet', href='/css/app_2.min.css')
+		link(rel='stylesheet', href='/css/custom.css')
+		link(href='/vendors/bower_components/chosen/chosen.css', rel='stylesheet')
+		link(href='/vendors/summernote/dist/summernote.css', rel='stylesheet')
+		link(href='/vendors/bower_components/flag-icon-css/css/flag-icon.min.css', rel='stylesheet')
+		block extrastuff
+	body
+		header#header.clearfix(data-ma-theme='blue')
+			ul.h-inner
+				li.hi-trigger.ma-trigger(data-ma-action='sidebar-open', data-ma-target='#sidebar')
+					.line-wrap
+						.line.top
+						.line.center
+						.line.bottom
+				li.hi-logo.hidden-xs
+					a(href='/')
+						i.zmdi.zmdi-apps
+						|  #{websitename}
+				li.pull-right
+					ul.hi-menu
+						if (user)
+							li(data-ma-action='search-open')
+								a(href='')
+									i.him-icon.zmdi.zmdi-search
+							if (globalnotifications.length < 1)
+								li.hidden-xs
+									a(href='/notifications')
+										i.him-icon.zmdi.zmdi-notifications
+							if (globalnotifications.length > 0)
+								li.dropdown
+									a(data-toggle='dropdown', href='')
+										i.him-icon.zmdi.zmdi-notifications
+										i.him-counts=globalnotifications.length
+									.dropdown-menu.dropdown-menu-lg.pull-right
+										.list-group.him-notification
+											.lg-header
+												| Latest Notifications
+											.lg-body
+												each notification in globalnotifications.slice(0, 5)
+													a.list-group-item.media(href=notification.link_url)
+														.pull-left
+															img.lgi-img(src=notification.sender_id.local.avatar_60, alt=notification.sender_id.local.user_name)
+														.media-body
+															.lgi-heading=notification.link_title
+															small.lgi-text=notification.link_text
+											a.view-more(href='/notifications') View All
+
+							if (user.local.user_role >= requiredpower.minimum_power_for_player_unban)
+								li.hidden-xs
+									a(href='/admin-notifications')
+										i.him-icon.zmdi.zmdi-alert-polygon
+										if (admin_notifications.length > 0)
+											i.him-counts #{admin_notifications.length}
+							if (user.local.user_role >= requiredpower.minimum_cheater_reports)
+								li.hidden-xs
+									a(href='/cheater-reports')
+										i.him-icon.zmdi.zmdi-account-calendar
+										if (cheater_reports.length > 0)
+											i.him-counts #{cheater_reports.length}
+							li.hidden-xs.ma-trigger(data-ma-action='sidebar-open', data-ma-target='#chat')
+								a(href='')
+									i.him-icon.zmdi.zmdi-tv-play
+						li.dropdown
+							a(data-toggle='dropdown', href='')
+								i.him-icon.zmdi.zmdi-more-vert
+							ul.dropdown-menu.dm-icon.pull-right
+								if (!user)
+									li
+										a(href='/user/login')
+											i.zmdi.zmdi-sign-in
+											|  Login
+									li
+										a(href='/user/signup')
+											i.zmdi.zmdi-account-add
+											|  Register
+								if (user)
+									if (user.local.user_role > 99)
+										li
+											a(href='/admin/home')
+												i.zmdi.zmdi-settings-square
+												|  Admin
+									li
+										a(href='/user/profile')
+											i.zmdi.zmdi-account-box
+											|  Profile
+									li
+										a(href='/user/logout')
+											i.zmdi.zmdi-time-restore
+											|  Logout
+			if (user)
+				.h-search-wrap
+					.hsw-inner
+						i.hsw-close.zmdi.zmdi-close(data-ma-action='search-close')
+						form(method='get', action='/banlist/search/player')
+							input(type='text', name='sq', placeholder='Search banned players, enter guid or playername')
+		section#main
+			aside#sidebar.sidebar.c-overflow
+				.s-profile
+					a(href='', data-ma-action='profile-menu-toggle')
+						.sp-pic
+							img(src='/img/logo.png', alt=websitename)
+						.sp-info
+							if (!user)
+								| Login
+							if (user)
+								| My Profile
+							i.zmdi.zmdi-caret-down
+					ul.main-menu
+						if (!user)
+							li
+								a(href='/user/login')
+									i.zmdi.zmdi-sign-in
+									|  Login
+							li
+								a(href='/user/signup')
+									i.zmdi.zmdi-account-add
+									|  Register
+						if (user)
+							if (user.local.user_role > 99)
+								li
+									a(href='/admin/home')
+										i.zmdi.zmdi-settings-square
+										|  Admin
+							li
+								a(href='/user/profile')
+									i.zmdi.zmdi-account-box
+									|  Profile
+							li
+								a(href='/user/logout')
+									i.zmdi.zmdi-time-restore
+									|  Logout
+				ul#main-menu.main-menu
+					li
+						a(href='/')
+							i.zmdi.zmdi-home
+							|  Home
+					if (user)
+						if (user.local.user_role >= requiredpower.minimum_cheater_reports)
+							if (cheater_reports.length > 0)
+								li
+									a(href='/cheater-reports')
+										i.zmdi.zmdi-account-calendar.c-red
+										|  Cheater Reports (#{cheater_reports.length})
+					li
+						a(href='/members')
+							i.zmdi.zmdi-accounts-list
+							|  Members
+					li
+						a(href='/banlist')
+							i.zmdi.zmdi-thumb-down
+							|  Banlist
+					li
+						a(href='/support')
+							i.zmdi.zmdi-pin-help
+							|  Support
+			aside#chat.sidebar
+				.lg-body.c-overflow
+					.chat-search
+						span.zmdi.zmdi-arrow-right.c-green
+						|  Join Servers with 1 click here
+					.list-group
+						#serverjoins
+			block content
+		footer#footer.p-b-25
+			.container.container-alt
+				.col-md-12
+					ul#todayusers.list-inline.commaseparated.pull-left
+			| © #{websitename} #{moment().format('YYYY')} All rights reserved
+			br
+			| Powered &amp; Designed by NeHo
+		.page-loader
+			.preloader.pls-blue
+				svg.pl-circular(viewbox='25 25 50 50')
+					circle.plc-path(cx='50', cy='50', r='20')
+				p Please wait...
+		
+		block js
+			script(src='/js/jquery-1.10.2.min.js')
+			script(src='/vendors/bower_components/bootstrap/dist/js/bootstrap.min.js')
+			script(src='/vendors/bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js')
+			script(src='/vendors/bower_components/Waves/dist/waves.min.js')
+			script(src='/vendors/bootstrap-growl/bootstrap-growl.min.js')
+			script(src='/vendors/bower_components/bootstrap-select/dist/js/bootstrap-select.js')
+			script(src='/vendors/bower_components/moment/min/moment.min.js')
+			script(src='/vendors/bower_components/lightgallery/lib/lightgallery-all.min.js')
+			//if lt IE 9
+				script(src='/vendors/bower_components/jquery-placeholder/jquery.placeholder.min.js')
+			script(src='/js/socket.io.js')
+			script(src='/vendors/bower_components/sweetalert2/dist/sweetalert2.min.js')
+			block dropzonejs
+			script(src='/vendors/summernote/dist/summernote-updated.min.js')
+			script(src='/vendors/bower_components/chosen/chosen.jquery.js')
+			script(src='/js/app.min.js')
+			script(src='/js/markdown-it.min.js')
+			if (user)
+				script(src='/js/client.js')
+			block extrajs
+			if (user)
+				block userjs

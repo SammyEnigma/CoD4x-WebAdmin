@@ -1,0 +1,199 @@
+extends ../../layout/home
+
+block content
+		ol.breadcrumb
+			li
+				a(href='/') Home
+			li
+				a(href='/admin/home') Admin
+			li.active Edit
+		section#content
+			.container.container-alt
+				.block-header
+					h2
+						| #{results.servers.name}
+						small 
+							if (results.servers.external_ip===true)
+								| External Server on #{results.servers.ip}:#{results.servers.port} address
+							else
+								| Local Server on #{results.servers.ip}:#{results.servers.port} address
+				.row
+					.col-md-12
+						if (success_messages.length > 0)
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-success
+										| #{success_messages}
+						if (error_messages.length > 0)
+							.row
+								.col-sm-12.col-md-12.m-t-30
+									.alert.alert-danger
+										| #{error_messages}
+						.card
+							.card-body
+								div(role='tabpanel')
+									ul.tab-nav(role='tablist')
+										li.active
+											a(href='#server', aria-controls='server', role='tab', data-toggle='tab')
+												i.zmdi.zmdi-play.m-r-10
+												| Server
+										li
+											a(href='#server_rules', aria-controls='server_rules', role='tab', data-toggle='tab')
+												i.zmdi.zmdi-comment-edit.m-r-10
+												| Rules
+										li
+											a(href='#screenshot_plugin', aria-controls='screenshot_plugin', role='tab', data-toggle='tab')
+												i.zmdi.zmdi-camera.m-r-10
+												| Screenshots
+										li
+											a(href='#settings', aria-controls='settings', role='tab', data-toggle='tab')
+												i.zmdi.zmdi-settings.m-r-10
+												| Settings
+									.tab-content
+										#server.tab-pane.active(role='tabpanel')
+											.card
+												.card-body.card-padding
+													form(method='post', action='/admin/servers/edit/update/'+results.servers._id)
+														.row
+															.col-md-4
+																.form-group
+																	.checkbox
+																		label
+																			input(type="checkbox", name="external_ip", checked=(results.servers.external_ip))
+																			span.input-helper
+																			| External Server
+															.col-md-4
+																.form-group.fg-line
+																	label(for='ip')
+																		|  * Server IP
+																	input#ip.form-control.input-sm(type='text', name='ip', required, value=results.servers.ip)
+															.col-md-4
+																.form-group.fg-line
+																	label(for='port')
+																		|  * Server Port
+																	input#port.form-control.input-sm(type='text', name='port', required, value=results.servers.port)
+														.row
+															.col-md-12
+																.form-group.fg-line
+																	label(for='script_starter')
+																		|  Server start line
+																	textarea#script_starter.form-control.input-sm(rows='3' name='script_starter')
+																		| #{results.servers.script_starter}
+														.row
+															.col-md-5
+																.form-group.fg-line
+																	label(for='rcon_password')
+																		|  Rcon Password
+																	input#rcon_password.form-control.input-sm(type='password', name='rcon_password', value=results.servers.rcon_password)
+															.col-md-5
+																.form-group.fg-line
+																	label(for='screenshot_identkey')
+																		|  Screenshot identkey
+																	input#screenshot_identkey.form-control.input-sm(type='text', name='screenshot_identkey', value=results.servers.screenshot_identkey)
+														.row
+															.col-md-12
+																.form-group
+																	input(type='hidden', name='_csrf', value=csrfToken)
+																	button.btn.btn-primary.pull-right.waves-effect(type='submit') Save Changes
+														
+													.clearfix
+										#server_rules.tab-pane(role='tabpanel')
+											.card
+												.card-header
+													h2 Server Rules
+														small Server Rules on this game server, displayed on server details page
+												.card-body.card-padding
+													form(method='post', action='/admin/servers/edit/rules/update/'+results.servers._id)
+														.form-group.fg-line
+															label(for='server_rules')
+																|  * Server Rules
+															textarea#server_rules.form-control.input-sm.html-editor(rows='25' name='server_rules', required)
+																|#{results.servers.server_rules}
+														.form-group
+															input(type='hidden', name='_csrf', value=csrfToken)
+															button.btn.btn-primary.pull-right.waves-effect(type='submit') Save Changes
+													.clearfix
+										#screenshot_plugin.tab-pane(role='tabpanel')
+											.card
+												.card-header
+													h2 Game Server Settings - Screenshots
+														small If you would like to use the screenshot reciving, sending feature add this lines to your server.cfg
+												.card-body.card-padding
+													.red Make sure you change the red domain name to fit yours
+													br
+													pre
+														| set nehoscreenshot_identkey "#{results.servers.screenshot_identkey}"
+													br
+													pre
+														| set nehoscreenshot_url "https://
+														span.red wwww.mywebsite.com
+														|/cod4x_plugins/screenshots/#{results.servers.screenshot_identkey}"
+													br
+													pre
+														| loadplugin nehoscreenshotuploader
+											.clearfix
+										#settings.tab-pane(role='tabpanel')
+											.card
+												.card-body.card-padding
+													form(method='post', action='/admin/servers/edit/settings/update/'+results.servers._id)
+														- var current_time = new moment().format("HH:mm");
+														.row
+															.col-md-12.m-b-30.text-center
+																strong
+																	| Current Server Time on Local Machine: 
+																span.c-green 
+																	| #{current_time}
+														hr
+														.row
+															.col-md-12.m-b-15
+																h5 Auto restart Server every day at X hours
+														.row
+															.col-md-4
+																.form-group.p-t-5
+																	.toggle-switch.toggle-switch-demo(data-ts-color='blue')
+																			label.ts-label(for='auto_restart_server') Activate/Deactivate
+																			input#auto_restart_server(type='checkbox', hidden='hidden', name='auto_restart_server', checked=(results.servers.auto_restart_server))
+																			label.ts-helper(for='auto_restart_server')
+															.col-md-3
+																.form-group.fg-line
+																	select.selectpicker(name='time_to_restart_server', required)
+																		option(value=results.servers.time_to_restart_server) #{results.servers.time_to_restart_server}
+																		- for(var i = 0; i < 24; i++)
+																			option(value=i)=i
+															.col-md-5.p-t-5
+																span.small
+																	| * Server will be stopped for 2 minutes at X hours and then started
+														hr
+														.row
+															.col-md-12.m-t-15.m-b-15
+																h5 Card Background Color
+														.row
+															.col-md-4
+																.form-group.fg-line
+																	select.selectpicker(name='color', required)
+																		option(value=results.servers.color) #{results.servers.color}
+																		each row in results.colors
+																			option(value=row.name) #{row.name}
+															.col-md-8.p-t-5
+																span.small
+																	| * Card Background Color for this Game Server on the Homepage
+														hr
+														.row
+															.col-md-12.m-b-15.m-t-15
+																h5 Auto Restart on Server Crash
+														.row
+															.col-md-4
+																.form-group.p-t-5
+																	.toggle-switch.toggle-switch-demo(data-ts-color='blue')
+																			label.ts-label(for='auto_restart_server_on_crash') Activate/Deactivate
+																			input#auto_restart_server_on_crash(type='checkbox', hidden='hidden', name='auto_restart_server_on_crash', checked=(results.servers.auto_restart_server_on_crash))
+																			label.ts-helper(for='auto_restart_server_on_crash')
+															.col-md-8.p-t-5
+																span.small
+																	| * Game Server will be stopped for 2 minutes and started again on Server Crash
+														.row
+															.col-md-12.text-right
+																.form-group
+																	input(type='hidden', name='_csrf', value=csrfToken)
+																	button.btn.btn-primary.pull-right.waves-effect(type='submit') Save Changes
+													.clearfix
