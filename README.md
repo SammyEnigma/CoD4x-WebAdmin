@@ -45,6 +45,9 @@ Make sure you have [Node.js](https://nodejs.org) and [npm](https://www.npmjs.com
 
 Your app should now be running on [localhost:3000](http://localhost:3000).
 
+## Help/Support
+Please visit our [Forum](https://forum.cirkus-serveri.com).
+
 
 ## License
 CoD4x-WebAdmin is licensed under the GNU General Public License v3 (GPL-3) (http://www.gnu.org/copyleft/gpl.html).
