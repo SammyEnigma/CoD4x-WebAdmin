@@ -35,8 +35,6 @@
 		"webhook_url" : "webhook_url",
 		"webhook_displayname" : "CoD4x Webadmin",
 		"webhook_avatar" : "http://localhost:3000/img/profile-menu.png",
-		"webhook_displayname" : "CoD4X WebAdmin",
-		"webhook_avatar" : "http://www.mywebsite.com/img/profile-menu.png"
 	},
 	"g_recaptcha": {
 		"SITE_KEY" : "SITE_KEY",
