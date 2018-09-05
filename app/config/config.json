@@ -50,10 +50,7 @@
 	"ssh_access": {
 		"host" : "your-server-ip",
 		"user" : "putty_username",
-		"password" : "putty_password",
-		"host" : "123.456.789.000",
-		"user" : "linux_user",
-		"password" : "password"
+		"password" : "putty_password"
 	},
 	"cod4_server_plugin": {
 		"download_link" : "http://files.linuxgsm.com/CallOfDuty4/cod4x18_dedrun.tar.bz2",
