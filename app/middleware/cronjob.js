@@ -24,14 +24,15 @@ const Adminactions = require("../models/admin_actions");
 
 	var now = new Date();
 	var current_time = new moment().format("H");
+	var current_time_start = new moment().format("H");
 
 	// ################################ Check CoD4xWebadmin version on Github page ################################ //
-	var job = schedule.scheduleJob('0 0 1 * * *', function(){
+	var job = schedule.scheduleJob('0 3 * * *', function(){
 		check_cod4_xwebadmin_version();
 	});
 
 	// ################################ Check CoD4x Server version on Github page ################################ //
-	var job1 = schedule.scheduleJob('0 0 1 * * *', function(){
+	var job1 = schedule.scheduleJob('0 3 * * *', function(){
 		get_cod4x_latest_version();
 	});
 
@@ -66,7 +67,7 @@ const Adminactions = require("../models/admin_actions");
 		remove_old_bans: Plugins.findOne({'name_alias' : 'remove-old-bans', 'status': true}, 'status cron_job_time_intervals').execAsync()
 	}).then (function(results){
 		if (results.remove_old_bans){
-			var job4 = schedule.scheduleJob('0 35 1 * * *', function(){
+			var job4 = schedule.scheduleJob('30 1 * * *', function(){
 				var daysToDeletion = parseInt(results.remove_old_bans.cron_job_time_intervals);
 				var deletionDate = new Date(now.setDate(now.getDate() - daysToDeletion));
 				Bans.find({createdAt : {$lt : deletionDate}},function(error, counted){	
@@ -93,7 +94,7 @@ const Adminactions = require("../models/admin_actions");
 		remove_old_admin_actions: Plugins.findOne({'name_alias' : 'remove-old-admin-actions', 'status': true}, 'status cron_job_time_intervals').execAsync()
 	}).then (function(results){
 		if (results.remove_old_admin_actions){
-			var rmadminactions = schedule.scheduleJob('0 1 1 * * *', function(){
+			var rmadminactions = schedule.scheduleJob('45 1 * * *', function(){
 				var daysToDeletion = parseInt(results.remove_old_admin_actions.cron_job_time_intervals);
 				var deletionDate = new Date(now.setDate(now.getDate() - daysToDeletion));
 				Adminactions.find({createdAt : {$lt : deletionDate}},function(error, counted){	
@@ -128,200 +129,198 @@ const Adminactions = require("../models/admin_actions");
 		console.log("There was an error Plugin check server Online: " +err);
 	});
 
-	// ################################ Stop server every day at X hours ################################ //
-	BluebirdPromise.props({
-		servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': false}).execAsync()
-	}).then (function(results){
-		if (results.servers.length > 0){
-			var ssh = new SSH({
-				host: config.ssh_access.host,
-				user: config.ssh_access.user,
-				pass: config.ssh_access.password,
-				baseDir: config.cod4_server_plugin.servers_root
-			});
-			results.servers.forEach(function (server){
-				if (server){
-					var stopserver_job = schedule.scheduleJob('0 0 '+server.time_to_restart_server+' * * *', function(){
-						ssh.exec('cd '+config.cod4_server_plugin.servers_root+'/cod4-'+server.port+' && screen -X -S cod4-'+server.port+' quit && kill $(lsof -t -i:'+server.port+')', {
-							out: console.log.bind(console)
-						}).start();
-					});
-					Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
-						'count_connection_fail': 0,
-						'is_stoped': true,
-						'is_online': false
-					}}).exec(function(err, done){
-						if(err) {
-							console.log(err);
-						}
-					});
-					var newSystemlogs = new Systemlogs ({
-						logline: server.name+' stopped (Auto Restart Server)',
-						successed: true
-					});
-					newSystemlogs.saveAsync()
-				}
-			})
-		}
-	}).catch(function(err) {
-		console.log("There was an error in plugin auto restart servers: " +err);
-	});
+	// ################################ Restart server every day at X hours ################################ //
 
-	// Start server every day at X hours + 2min (Part of stop server every day at X hours)
-	BluebirdPromise.props({
-		servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': true}).execAsync(),
-		plugin: Plugins.findOne({'name_alias': 'cod4x-authtoken', 'status':true}).execAsync()
-	}).then (function(results){
-		if (results.servers.length > 0){
-			var ssh = new SSH({
-				host: config.ssh_access.host,
-				user: config.ssh_access.user,
-				pass: config.ssh_access.password,
-				baseDir: config.cod4_server_plugin.servers_root
-			});
-			results.servers.forEach(function (server){
-				if (server){
-					//Check if we use cod4x authtoken
-					if (results.plugin){
-						var startline = includecod4authtoken(server.script_starter, 'set sv_authtoken "'+results.plugin.extra_field+'" +exec server.cfg');
-					}else {
-						var startline = server.script_starter;
+	var runstophourly = schedule.scheduleJob('15 0 * * * *', function(){
+		BluebirdPromise.props({
+			servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': false}, 'name name_alias ip port count_connection_fail, script_starter').execAsync()
+		}).then (function(results){
+			if (results.servers.length > 0){
+				var ssh = new SSH({
+					host: config.ssh_access.host,
+					user: config.ssh_access.user,
+					pass: config.ssh_access.password,
+					baseDir: config.cod4_server_plugin.servers_root
+				});
+				results.servers.forEach(function (server){
+					if (server){
+							ssh.exec('cd '+config.cod4_server_plugin.servers_root+'/cod4-'+server.port+' && screen -X -S cod4-'+server.port+' quit && kill $(lsof -t -i:'+server.port+')', {
+								out: console.log.bind(console)
+							}).start();
+						Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
+							'count_connection_fail': 0,
+							'is_stoped': true,
+							'is_online': false
+						}}).exec(function(err, done){
+							if(err) {
+								console.log(err);
+							}
+						});
+						var newSystemlogs = new Systemlogs ({
+							logline: server.name+' stopped (Auto Restart Server)',
+							successed: true
+						});
+						newSystemlogs.saveAsync()
 					}
-					var startserver_job = schedule.scheduleJob('0 2 '+server.time_to_restart_server+' * * *', function(){
+				})
+			}
+		}).catch(function(err) {
+			console.log("There was an error in plugin auto restart servers: " +err);
+		});
+	})
+	var runstarthourly = schedule.scheduleJob('15 2 * * * *', function(){
+		// Start server every day at X hours + 2min (Part of stop server every day at X hours)
+		BluebirdPromise.props({
+			servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': true}, 'name name_alias ip port count_connection_fail, script_starter').execAsync(),
+			plugin: Plugins.findOne({'name_alias': 'cod4x-authtoken', 'status':true}, 'extra_field').execAsync()
+		}).then (function(results){
+			if (results.servers.length > 0){
+				var ssh = new SSH({
+					host: config.ssh_access.host,
+					user: config.ssh_access.user,
+					pass: config.ssh_access.password,
+					baseDir: config.cod4_server_plugin.servers_root
+				});
+				results.servers.forEach(function (server){
+					if (server){
+						//Check if we use cod4x authtoken
+						if (results.plugin){
+							var startline = includecod4authtoken(server.script_starter, 'set sv_authtoken "'+results.plugin.extra_field+'" +exec server.cfg');
+						}else {
+							var startline = server.script_starter;
+						}
 						ssh.exec('cd '+config.cod4_server_plugin.servers_root+'/cod4-'+server.port+' && /usr/bin/screen -dmS cod4-' +server.port+ ' ' +startline, {
 							out: function(stdout) {
-			        			console.log(stdout);
-			    			}
+				        		console.log(stdout);
+				    		}
 						}).start();
-					});
-					Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
-						'count_connection_fail': 0,
-						'is_stoped': false,
-						'is_online': true
-					}}).exec(function(err, done){
-						if(err) {
-							console.log(err);
-						}
-					});
-					var newSystemlogs = new Systemlogs ({
-						logline: server.name+' started (Auto Restart Server)',
-						successed: true
-					});
-					newSystemlogs.saveAsync()
-				}
-			})
-		}
-	}).catch(function(err) {
-		console.log("There was an error in plugin auto restart servers: " +err);
+						Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
+							'count_connection_fail': 0,
+							'is_stoped': false,
+							'is_online': true
+						}}).exec(function(err, done){
+							if(err) {
+								console.log(err);
+							}
+						});
+						var newSystemlogs = new Systemlogs ({
+							logline: server.name+' started (Auto Restart Server)',
+							successed: true
+						});
+						newSystemlogs.saveAsync()
+					}
+				})
+			}
+		}).catch(function(err) {
+			console.log("There was an error in plugin auto restart servers: " +err);
+		});
 	});
 
 	// ################################ Stop server/remove screen session on server crash ################################ //
-	BluebirdPromise.props({
-		servers: Servers.find({'auto_restart_server_on_crash' : true, 'is_stoped': false, 'external_ip':false, 'count_connection_fail': {$gte: 3}}).execAsync()
-	}).then (function(results){
-		if (results.servers.length > 0){
-			var ssh = new SSH({
-				host: config.ssh_access.host,
-				user: config.ssh_access.user,
-				pass: config.ssh_access.password,
-				baseDir: config.cod4_server_plugin.servers_root
-			});
-			var sq = new SourceQuery(1000);
-			results.servers.forEach(function (server){
-				if (server){
-					//Lets make sure that our server has crashed
-					sq.open(server.ip, server.port);
-					sq.getInfo(function(err, info){  	
-						if (!err){
-							//Our server is working we do not need to restart it, we will just update the DB
-							Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
-								'count_connection_fail': 0,
-								'is_stoped': false,
-								'is_online': true
-							}}).exec(function(err, done){
-								if(err) {
-									console.log(err);
-								}
-							});
-						} else {
-							// Server is unavailable we have to stop it, kill all processes on this port and quit the screen session
-							var stopserveroncrash_job = schedule.scheduleJob('*/3 * * * *', function(){
+	var runstoponservercrashed = schedule.scheduleJob('45 */15 * * * *', function(){
+		BluebirdPromise.props({
+			servers: Servers.find({'auto_restart_server_on_crash' : true, 'is_stoped': false, 'is_online': true, 'external_ip':false, 'count_connection_fail': {$gte: 5}}, 'name name_alias ip port count_connection_fail, script_starter').execAsync()
+		}).then (function(results){
+			if (results.servers.length > 0){
+				var ssh = new SSH({
+					host: config.ssh_access.host,
+					user: config.ssh_access.user,
+					pass: config.ssh_access.password,
+					baseDir: config.cod4_server_plugin.servers_root
+				});
+				var sq = new SourceQuery(1000);
+				results.servers.forEach(function (server){
+					if (server){
+						//Lets make sure that our server has crashed
+						sq.open(server.ip, server.port);
+						sq.getInfo(function(err, info){  	
+							if (!err){
+								//Our server is working we do not need to restart it, we will just update the DB
+								Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
+									'count_connection_fail': 0,
+									'is_stoped': false,
+									'is_online': true
+								}}).exec(function(err, done){
+									if(err) {
+										console.log(err);
+									}
+								});
+							} else {
+								// Server is unavailable we have to stop it, kill all processes on this port and quit the screen session
 								ssh.exec('cd '+config.cod4_server_plugin.servers_root+'/cod4-'+server.port+' && screen -X -S cod4-'+server.port+' quit && kill $(lsof -t -i:'+server.port+')', {
 									out: console.log.bind(console)
 								}).start();
-							});
-							Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
-								'count_connection_fail': 3,
-								'is_stoped': true,
-								'is_online': false
-							}}).exec(function(err, done){
-								if(err) {
-									console.log(err);
-								}
-							});
-							var newSystemlogs = new Systemlogs ({
-								logline: server.name+' stopped (Auto Restart on Server Crash)',
-								successed: true
-							});
-							newSystemlogs.saveAsync()
-						}
-					});
-				}
-			})
-		}
-	}).catch(function(err) {
-		console.log("There was an error in plugin auto restart servers: " +err);
-	});
 
-	// Start server after it crashed + 2min (Part of server crashed and stopped)
-	BluebirdPromise.props({
-		servers: Servers.find({'auto_restart_server_on_crash' : true, 'external_ip':false, 'count_connection_fail': {$gte: 3}, 'is_stoped':true}).execAsync(),
-		plugin: Plugins.findOne({'name_alias': 'cod4x-authtoken', 'status':true}).execAsync()
-	}).then (function(results){
-		if (results.servers.length > 0){
-			var ssh = new SSH({
-				host: config.ssh_access.host,
-				user: config.ssh_access.user,
-				pass: config.ssh_access.password,
-				baseDir: config.cod4_server_plugin.servers_root
-			});
-			results.servers.forEach(function (server){
-				if (server){
-					//Check if we use cod4x authtoken
-					if (results.plugin){
-						var startline = includecod4authtoken(server.script_starter, 'set sv_authtoken "'+results.plugin.extra_field+'" +exec server.cfg');
-					}else {
-						var startline = server.script_starter;
+								Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
+									'count_connection_fail': 5,
+									'is_stoped': true,
+									'is_online': false
+								}}).exec(function(err, done){
+									if(err) {
+										console.log(err);
+									}
+								});
+								var newSystemlogs = new Systemlogs ({
+									logline: server.name+' stopped (Auto Restart on Server Crash)',
+									successed: true
+								});
+								newSystemlogs.saveAsync()
+							}
+						});
 					}
-					var startserver_job = schedule.scheduleJob('*/5 * * * *', function(){
+				})
+			}
+		}).catch(function(err) {
+			console.log("There was an error in plugin auto restart servers: " +err);
+		});
+	});
+	var runstartonservercrashed = schedule.scheduleJob('45 */17 * * * *', function(){
+		// Start server after it crashed + 2min (Part of server crashed and stopped)
+		BluebirdPromise.props({
+			servers: Servers.find({'auto_restart_server_on_crash' : true, 'external_ip':false, 'count_connection_fail': {$gte: 5}, 'is_stoped':true}, 'name name_alias ip port count_connection_fail, script_starter').execAsync(),
+			plugin: Plugins.findOne({'name_alias': 'cod4x-authtoken', 'status':true}).execAsync()
+		}).then (function(results){
+			if (results.servers.length > 0){
+				var ssh = new SSH({
+					host: config.ssh_access.host,
+					user: config.ssh_access.user,
+					pass: config.ssh_access.password,
+					baseDir: config.cod4_server_plugin.servers_root
+				});
+				results.servers.forEach(function (server){
+					if (server){
+						//Check if we use cod4x authtoken
+						if (results.plugin){
+							var startline = includecod4authtoken(server.script_starter, 'set sv_authtoken "'+results.plugin.extra_field+'" +exec server.cfg');
+						}else {
+							var startline = server.script_starter;
+						}
 						ssh.exec('cd '+config.cod4_server_plugin.servers_root+'/cod4-'+server.port+' && /usr/bin/screen -dmS cod4-' +server.port+ ' ' +startline, {
 							out: function(stdout) {
-			        			console.log(stdout);
-			    			}
+				        		console.log(stdout);
+				    		}
 						}).start();
-					});
-
-					Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
-								'count_connection_fail': 0,
-								'is_stoped': false,
-								'is_online': true
-					}}).exec(function(err, done){
-						if(err) {
-							console.log(err);
-						}
-					});
-					var newSystemlogs = new Systemlogs ({
-						logline: server.name+' started (Auto Restart on Server Crash)',
-						successed: true
-					});
-					newSystemlogs.saveAsync()
-				}
-			})
-		}
-	}).catch(function(err) {
-		console.log("There was an error in plugin auto restart servers: " +err);
+						Servers.findOneAndUpdate({ "_id": server._id }, { "$set": {
+							'count_connection_fail': 0,
+							'is_stoped': false,
+							'is_online': true
+						}}).exec(function(err, done){
+							if(err) {
+								console.log(err);
+							}
+						});
+						var newSystemlogs = new Systemlogs ({
+							logline: server.name+' started (Auto Restart on Server Crash)',
+							successed: true
+						});
+						newSystemlogs.saveAsync()
+					}
+				})
+			}
+		}).catch(function(err) {
+			console.log("There was an error in plugin auto restart servers: " +err);
+		});
 	});
-
 	// ################################ Functions ################################ //
 	function check_cod4_xwebadmin_version(req, res, next) {
 		var my_packagejsonfile = './package.json';
@@ -332,16 +331,23 @@ const Adminactions = require("../models/admin_actions");
 				} else{
 					//If there is a result
 					if ( typeof github_results !== 'undefined' && github_results){
-						//console.log(github_results.version);
+						console.log(github_results);
 						var myversion = 'v'+obj.version;
-						Appversion.findOneAsync({name:'CoD4x-WebAdmin'})
-						.then (function(result){
-							result.local_version = myversion,
-							result.github_version = github_results.tag_name,
-							result.saveAsync()
-						}).catch(function(err) {
-							console.log("There was an error in GitHub version check plugin: " +err);
+						Appversion.findOneAndUpdate({name:'CoD4x-WebAdmin' }, { "$set": {
+							'local_version': myversion,
+							'github_version': github_results.tag_name
+						}}).exec(function(err, done){
+							if(err) {
+								console.log(err);
+							} else {
+								console.log('CoD4xWebadmin updated');
+							}
 						});
+						var newSystemlogs = new Systemlogs ({
+							logline:'CoD4x-WebAdmin latest application version checked on Github',
+							successed: true
+						});
+						newSystemlogs.saveAsync()
 					}else{
 						console.log('Could not get the latest version from github');
 					}
@@ -355,16 +361,23 @@ const Adminactions = require("../models/admin_actions");
 					console.log(err)
 				} else{
 					//If there is a result
+					console.log(github_results);
 					if ( typeof github_results !== 'undefined' && github_results){
-						//console.log(github_results);
-						Cod4xversion.findOneAsync({name:'CoD4x-Server'})
-						.then (function(result){
-							result.prerelease = github_results.prerelease,
-							result.github_version = github_results.tag_name,
-							result.saveAsync()
-						}).catch(function(err) {
-							console.log("There was an error in GitHub version check plugin: " +err);
+						Cod4xversion.findOneAndUpdate({name:'CoD4x-Server'}, { "$set": {
+							'prerelease': github_results.prerelease,
+							'github_version': github_results.tag_name
+						}}).exec(function(err, done){
+							if(err) {
+								console.log(err);
+							} else {
+								console.log('CoD4x-Server updated');
+							}
 						});
+						var newSystemlogs = new Systemlogs ({
+							logline:'CoD4x-Server latest server version checked on Github',
+							successed: true
+						});
+						newSystemlogs.saveAsync()
 					}else{
 						console.log('Could not get the latest version from github');
 					}
@@ -374,7 +387,7 @@ const Adminactions = require("../models/admin_actions");
 	function check_if_server_is_online(req, res, next) {
 		BluebirdPromise.props({
 			checkdiscord: Plugins.findOne({'category': 'discord'}, 'status').execAsync(),
-			servers: Servers.find({'count_connection_fail': { $gte: 3}, 'is_online':false, 'is_stoped':false}).execAsync()
+			servers: Servers.find({'count_connection_fail': 5, 'is_stoped':false}, 'name').execAsync()
 		}).then (function(results){
 			if (results.servers.length > 0){
 				results.servers.forEach(function (game_server, done){
@@ -464,7 +477,7 @@ const Adminactions = require("../models/admin_actions");
 		sq.open(myserver.ip, myserver.port);
 		sq.getInfo(function(err, info){
 			if (err){
-				console.log(err);
+				console.log('Server status update plugin error: '+err);
 			}else{
 				//Remove Host(Rounds: 0/0) from alias if it exist on Promod Servers
 				if (S(info.name).contains('Round') == true){
@@ -472,7 +485,6 @@ const Adminactions = require("../models/admin_actions");
 				}else{
 					var new_name= info.name
 				}
-
 				Servers.findOneAndUpdate({ "_id": myserver._id }, { "$set": {
 					'name':info.name,
 					'online_players': info.players+'/'+info.maxplayers,
@@ -514,7 +526,7 @@ const Adminactions = require("../models/admin_actions");
 			} else {
 				console.log('Something went wrong '+error)
 				Servers.findOneAndUpdate({ "_id": myserver._id }, { "$set": {
-					'is_online': false,
+					'is_online': true,
 					'count_connection_fail': myserver.count_connection_fail+1
 				}}).exec(function(err, done){
 					if(err) {
@@ -536,7 +548,7 @@ const Adminactions = require("../models/admin_actions");
 	}
 	function update_server_status(req, res, next) {
 		BluebirdPromise.props({
-			servers: Servers.find({}).sort({'updatedAt': 1}).execAsync()
+			servers: Servers.find({'is_stoped': false}, 'name_alias ip port count_connection_fail').sort({'updatedAt': 1}).execAsync()
 		}).then (function(results){
 			if (results.servers){				
 				updateServersFromArray(results.servers);
@@ -549,7 +561,7 @@ const Adminactions = require("../models/admin_actions");
 	}
 	function refreshplayerlist(req, res, next) {
 		BluebirdPromise.props({
-			servers: Servers.find({}).sort({}).execAsync()
+			servers: Servers.find({'is_stoped': false}, 'name_alias ip port count_connection_fail').sort({}).execAsync()
 		}).then (function(results){
 			if (results.servers){				
 				updatePlayersFromArray(results.servers);
@@ -577,21 +589,7 @@ const Adminactions = require("../models/admin_actions");
 			}
 		}
 	}
-	function xmlgamedata(nameKey, myArray){
-		for (var i=0; i < myArray.length; i++) {
-			if (myArray[i]._attributes.Name === nameKey) {
-				return myArray[i]._attributes.Value;
-			}
-		}
-	}
-	function xmlgetplayers(nameKey, myArray){
-	
-		for (var i=0; i < myArray.length; i++) {
-			if (myArray[i].nameKey === nameKey) {
-				return myArray[i];
-			}
-		}
-	}
+
 	function uncolorize(string) {
 		string = S(string).replaceAll('^0', '').s;
 		string = S(string).replaceAll("^1", "").s;
