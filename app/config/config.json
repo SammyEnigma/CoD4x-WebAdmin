@@ -58,7 +58,7 @@
 	"discord_webhook": {
 		"webhook_url" : "webhook_url",
 		"webhook_displayname" : "CoD4x Webadmin",
-		"webhook_avatar" : "http://localhost:3000/img/profile-menu.png"
+		"webhook_avatar" : "http://localhost:3000/img/profile-menu.png",
 		"webhook_displayname" : "CoD4X WebAdmin",
 		"webhook_avatar" : "http://www.mywebsite.com/img/profile-menu.png"
 	},
@@ -74,7 +74,7 @@
 	"ssh_access": {
 		"host" : "your-server-ip",
 		"user" : "putty_username",
-		"password" : "putty_password"
+		"password" : "putty_password",
 		"host" : "123.456.789.000",
 		"user" : "linux_user",
 		"password" : "password"
