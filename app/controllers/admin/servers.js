@@ -233,7 +233,7 @@ module.exports = {
 			}).exec('chmod 775 '+config.cod4_server_plugin.servers_root+'/main-server-files/main/server.cfg',{
 				out: console.log.bind('CHMOD 775 server.cfg')
 			}).start();
-			req.flash('success_messages', 'Server successfully Created, dont forget to open the PORTS in Firewall and to start the Server and ofcorse to change manually the server,cfg');
+			req.flash('success_messages', 'Server successfully Created, dont forget to open the PORTS in Firewall and to start the Server and ofcorse to change manually the server.cfg');
 			res.redirect('back');
 		}).catch(function(err) {
 			console.log("There was an error" +err);
@@ -455,7 +455,7 @@ module.exports = {
 		}).exec('rm cod4x18_dedrun.tar.bz2', {
 			out: console.log.bind('File removed, we are ready to create new game servers')
 		}).exec('chmod 777 '+config.cod4_server_plugin.servers_root+'/main-server-files/cod4x18_dedrun',{
-				out: console.log.bind('CHMOD 775 cod4x18_dedrun')
+				out: console.log.bind('CHMOD 777 cod4x18_dedrun')
 		}).start();
 		req.flash('success_messages', 'Server files will be extracted, it depends on your system how fast it will happen, it is usually about 5-10 mins');
 		res.redirect('back');
