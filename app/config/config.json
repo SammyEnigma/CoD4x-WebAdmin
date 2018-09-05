@@ -27,30 +27,6 @@
 		"callbackURL"      : "http://localhost:3000/user/auth/google/callback"
 	},
 	"steamAuth" : {
-		"returnURL"         : "http://localhost:3000/user/auth/steam/return",
-		"realm"     : "http://localhost:3000",
-
-	"sessionSecret": "mysupersecretsession_chang_me_to_some_random",
-	"website_name": "CoD4X WebAdmin",
-	"website_url": "https://www.mywebsite.com",
-	"contact_email": "info@mywebsite.com",
-	"facebookAuth" : {
-		"clientID"        : "clientID",
-		"clientSecret"    : "clientSecret",
-		"callbackURL"     : "http://www.mywebsite.com/user/auth/facebook/callback",
-		"profileURL"      : "https://graph.facebook.com/v2.5/me?fields=first_name,last_name,email"
-	},
-	"twitterAuth" : {
-		"consumerKey"     : "consumerKey",
-		"consumerSecret"  : "consumerSecret",
-		"callbackURL"     : "http://www.mywebsite.com/user/auth/twitter/callback"
-	},
-	"googleAuth" : {
-		"clientID"        : "clientID",
-		"clientSecret"    : "clientSecret",
-		"callbackURL"     : "http://www.mywebsite.com/user/auth/google/callback"
-	},
-	"steamAuth" : {
 		"returnURL"         : "http://www.mywebsite.com/user/auth/steam/return",
 		"realm"     : "http://www.mywebsite.com",
 		"apiKey"      : "apiKey"
