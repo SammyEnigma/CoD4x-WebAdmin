@@ -8,6 +8,7 @@ var dbURI = "mongodb://" +
 			config.db.port + "/" + 
 			config.db.name;
 mongoose.connect(dbURI, {useNewUrlParser:true});
+mongoose.set('useCreateIndex', true);
 const User = require("../models/user");
 const ExtraRcon = require("../models/extra_rcon_commands");
 const Rconposition = require("../models/rconcommand_position");
