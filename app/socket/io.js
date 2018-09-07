@@ -33,13 +33,6 @@ const md = require('markdown-it')({
 	typographer: true
 });
 
-var dbURI = "mongodb://" + 
-			encodeURIComponent(config.db.username) + ":" + 
-			encodeURIComponent(config.db.password) + "@" + 
-			config.db.host + ":" + 
-			config.db.port + "/" + 
-			config.db.name;
-
 io.use(passportSocketIo.authorize({
   cookieParser: cookieParser,
   key:'connect.sid',
@@ -64,7 +57,7 @@ io.sockets.on('connection' , function(socket){
 		
 		Users.findOneAndUpdate({'_id': userID}, {$set:{'socketio.is_online':true, 'socketio.socket_id':socket.id}})
 		.then (function(results){
-			Servers.find().select('_id name ip port map_playing map_img online_players')
+			Servers.find({'is_stoped': false}).select('_id name ip port map_playing map_img online_players')
 		.then (function(serverjoins){
 			io.sockets.emit('online servers', serverjoins)
 		})
