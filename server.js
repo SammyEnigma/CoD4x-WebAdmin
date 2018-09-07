@@ -31,6 +31,7 @@ var dbURI = "mongodb://" +
 			config.db.port + "/" + 
 			config.db.name;
 mongoose.connect(dbURI, {useNewUrlParser:true});
+mongoose.set('useCreateIndex', true);
 // Throw an error if the connection fails
 mongoose.connection.on('error', function(err) {
 	if(err) throw err;
@@ -95,11 +96,15 @@ const admin_conversations = express.Router();
 require('./app/routes/admin_conversations')(admin_conversations, passport);
 app.use('/admin-conversations', admin_conversations);
 require('./app/routes/index')(app, passport);
+
+app.use(function(req, res, next){
+    res.status(404).render('404.pug', {title: "Sorry, page not found"});
+});
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   const err = new Error('Not Found');
   err.status = 404;
-  res.render('404.pug', {title: '404: File Not Found'});
   next(err);
 });
 // error handler
