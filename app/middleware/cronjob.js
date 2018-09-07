@@ -9,6 +9,7 @@ const schedule = require('node-schedule');
 const async = require('async');
 const SourceQuery = require('sourcequery');
 const geoip = require('geoip-lite-country-only');
+const countries = require('country-list')();
 const fs = require('fs');
 const S = require('string');
 const moment = require('moment');
@@ -18,6 +19,7 @@ const config = require('../config/config');
 const Plugins = require("../models/plugins");
 const Bans = require("../models/bans");
 const Servers = require("../models/servers");
+const Usermaps = require("../models/maps");
 const OnlinePlayers = require("../models/online_players");
 const Systemlogs = require("../models/system_logs");
 const Adminactions = require("../models/admin_actions");
@@ -27,12 +29,12 @@ const Adminactions = require("../models/admin_actions");
 	var current_time_start = new moment().format("H");
 
 	// ################################ Check CoD4xWebadmin version on Github page ################################ //
-	var job = schedule.scheduleJob('0 3 * * *', function(){
+	var job = schedule.scheduleJob('5 2 * * *', function(){
 		check_cod4_xwebadmin_version();
 	});
 
 	// ################################ Check CoD4x Server version on Github page ################################ //
-	var job1 = schedule.scheduleJob('0 3 * * *', function(){
+	var job1 = schedule.scheduleJob('6 2 * * *', function(){
 		get_cod4x_latest_version();
 	});
 
@@ -41,7 +43,7 @@ const Adminactions = require("../models/admin_actions");
 		refresh_server_status: Plugins.findOne({'name_alias' : 'refresh-server-status', 'status': true}, 'status cron_job_time_intervals').execAsync()
 	}).then (function(results){
 		if (results.refresh_server_status){
-			var job2 = schedule.scheduleJob('*/'+results.refresh_server_status.cron_job_time_intervals+' * * * *', function(){
+			var job2 = schedule.scheduleJob('5 */'+results.refresh_server_status.cron_job_time_intervals+' * * * *', function(){
 				update_server_status();
 			});
 		}
@@ -54,7 +56,7 @@ const Adminactions = require("../models/admin_actions");
 		server_status: Plugins.findOne({'name_alias' : 'refresh-playerlist', 'status': true}, 'status cron_job_time_intervals').execAsync()
 	}).then (function(results){
 		if (results.server_status){
-			var job3 = schedule.scheduleJob('*/'+results.server_status.cron_job_time_intervals+' * * * *', function(){
+			var job3 = schedule.scheduleJob('10 */'+results.server_status.cron_job_time_intervals+' * * * *', function(){
 				refreshplayerlist();
 			});
 		}
@@ -86,6 +88,26 @@ const Adminactions = require("../models/admin_actions");
 		}
 	}).catch(function(err) {
 		console.log("There was an error in plugin Remove old Bans: " +err);
+	});
+
+
+	// ################################ Plugin remove Old Cronjobs from the website ################################ //
+	var rmadminactions = schedule.scheduleJob('46 1 * * *', function(){
+		var daysToDeletion = parseInt(3);
+		var deletionDate = new Date(now.setDate(now.getDate() - daysToDeletion));
+		Systemlogs.find({createdAt : {$lt : deletionDate}},function(error, counted){	
+			if (!error){
+				if (counted.length > 0){
+					Systemlogs.remove({ createdAt : {$lt : deletionDate} }, function(err) {
+						if (err){
+							console.log('Remove old system cronjob logs error: '+err)
+						} else {
+							console.log('Old system logs removed')
+						}
+					});
+				}
+			}
+		});	
 	});
 
 
@@ -121,7 +143,7 @@ const Adminactions = require("../models/admin_actions");
 		check_server_online: Plugins.findOne({'name_alias' : 'check-server-online', 'status': true}, 'status cron_job_time_intervals').execAsync()
 	}).then (function(results){
 		if (results.check_server_online){
-			var job5 = schedule.scheduleJob('*/'+results.check_server_online.cron_job_time_intervals+' * * * *', function(){
+			var job5 = schedule.scheduleJob('15 */'+results.check_server_online.cron_job_time_intervals+' * * * *', function(){
 				check_if_server_is_online();
 			});
 		}
@@ -131,7 +153,7 @@ const Adminactions = require("../models/admin_actions");
 
 	// ################################ Restart server every day at X hours ################################ //
 
-	var runstophourly = schedule.scheduleJob('15 0 * * * *', function(){
+	var runstophourly = schedule.scheduleJob('20 0 * * * *', function(){
 		BluebirdPromise.props({
 			servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': false}, 'name name_alias ip port count_connection_fail, script_starter').execAsync()
 		}).then (function(results){
@@ -168,7 +190,7 @@ const Adminactions = require("../models/admin_actions");
 			console.log("There was an error in plugin auto restart servers: " +err);
 		});
 	})
-	var runstarthourly = schedule.scheduleJob('15 2 * * * *', function(){
+	var runstarthourly = schedule.scheduleJob('20 2 * * * *', function(){
 		// Start server every day at X hours + 2min (Part of stop server every day at X hours)
 		BluebirdPromise.props({
 			servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': true}, 'name name_alias ip port count_connection_fail, script_starter').execAsync(),
@@ -217,7 +239,7 @@ const Adminactions = require("../models/admin_actions");
 	});
 
 	// ################################ Stop server/remove screen session on server crash ################################ //
-	var runstoponservercrashed = schedule.scheduleJob('45 */15 * * * *', function(){
+	var runstoponservercrashed = schedule.scheduleJob('30 */15 * * * *', function(){
 		BluebirdPromise.props({
 			servers: Servers.find({'auto_restart_server_on_crash' : true, 'is_stoped': false, 'is_online': true, 'external_ip':false, 'count_connection_fail': {$gte: 5}}, 'name name_alias ip port count_connection_fail, script_starter').execAsync()
 		}).then (function(results){
@@ -274,7 +296,7 @@ const Adminactions = require("../models/admin_actions");
 			console.log("There was an error in plugin auto restart servers: " +err);
 		});
 	});
-	var runstartonservercrashed = schedule.scheduleJob('45 */17 * * * *', function(){
+	var runstartonservercrashed = schedule.scheduleJob('30 */17 * * * *', function(){
 		// Start server after it crashed + 2min (Part of server crashed and stopped)
 		BluebirdPromise.props({
 			servers: Servers.find({'auto_restart_server_on_crash' : true, 'external_ip':false, 'count_connection_fail': {$gte: 5}, 'is_stoped':true}, 'name name_alias ip port count_connection_fail, script_starter').execAsync(),
@@ -331,7 +353,7 @@ const Adminactions = require("../models/admin_actions");
 				} else{
 					//If there is a result
 					if ( typeof github_results !== 'undefined' && github_results){
-						console.log(github_results);
+						//console.log(github_results);
 						var myversion = 'v'+obj.version;
 						Appversion.findOneAndUpdate({name:'CoD4x-WebAdmin' }, { "$set": {
 							'local_version': myversion,
@@ -339,8 +361,6 @@ const Adminactions = require("../models/admin_actions");
 						}}).exec(function(err, done){
 							if(err) {
 								console.log(err);
-							} else {
-								console.log('CoD4xWebadmin updated');
 							}
 						});
 						var newSystemlogs = new Systemlogs ({
@@ -361,7 +381,7 @@ const Adminactions = require("../models/admin_actions");
 					console.log(err)
 				} else{
 					//If there is a result
-					console.log(github_results);
+					//console.log(github_results);
 					if ( typeof github_results !== 'undefined' && github_results){
 						Cod4xversion.findOneAndUpdate({name:'CoD4x-Server'}, { "$set": {
 							'prerelease': github_results.prerelease,
@@ -369,8 +389,6 @@ const Adminactions = require("../models/admin_actions");
 						}}).exec(function(err, done){
 							if(err) {
 								console.log(err);
-							} else {
-								console.log('CoD4x-Server updated');
 							}
 						});
 						var newSystemlogs = new Systemlogs ({
@@ -464,7 +482,7 @@ const Adminactions = require("../models/admin_actions");
 					}
 				});
 			} else {
-				console.log('There was an error - Plugin refresh players list '+err);
+				console.log('There was an error - Plugin refresh players list: '+err);
 			}
 		});
 	};
@@ -473,35 +491,52 @@ const Adminactions = require("../models/admin_actions");
 		var server_ip = myserver.ip;
 		var geo = geoip.lookup(server_ip);
 		var short_county = geo.country.toLowerCase();
+		var country_name = countries.getName(geo.country);
+
 		var sq = new SourceQuery(3000);
 		sq.open(myserver.ip, myserver.port);
 		sq.getInfo(function(err, info){
 			if (err){
 				console.log('Server status update plugin error: '+err);
 			}else{
-				//Remove Host(Rounds: 0/0) from alias if it exist on Promod Servers
+				//Remove Host(Rounds: 0/0) from alias if it exist on Promod Servers or ib main_shared
 				if (S(info.name).contains('Round') == true){
 					var new_name = info.name.split("Round")[0];
 				}else{
 					var new_name= info.name
 				}
-				Servers.findOneAndUpdate({ "_id": myserver._id }, { "$set": {
-					'name':info.name,
-					'online_players': info.players+'/'+info.maxplayers,
-					'map_playing': finalMapName(info.map),
-					'map_img': info.map,
-					'slug_name': new_name}}).exec(function(err, done){
-					if(err) {
-						console.log(err);
+
+				//Check if we have an image for the current map
+				Usermaps.findOne({ 'map_name': info.map }, 'map_name', function (err, mapname) {
+					if (err){
+						console.log('There was an error in map find on Server Status refresh: '+err);
+					} else {
+						if (mapname.map_name){
+							var mapimage = mapname.map_name;
+						} else {
+							var mapimage = 'no-photo';
+						}
+
+						Servers.findOneAndUpdate({ "_id": myserver._id }, { "$set": {
+							'name':info.name,
+							'online_players': info.players+'/'+info.maxplayers,
+							'map_playing': finalMapName(info.map),
+							'map_img': mapimage,
+							'slug_name': new_name}}).exec(function(err, done){
+							if(err) {
+								console.log(err);
+							}
+						});
 					}
 				});
+
+				
 			}			    
 		})			
 		sq.getRules(function(error, rules){
 			if(!error){
 				var private_clients = search("sv_privateClients", rules);
 				var max_clients = search("sv_maxclients", rules);
-				var location = search("_Location", rules);
 				var game_name = search("gamename", rules);
 				var gametype = search("g_gametype", rules);
 				var mapStartTime = search("g_mapStartTime", rules);
@@ -513,7 +548,7 @@ const Adminactions = require("../models/admin_actions");
 					'gametype': gametype.value,
 					'map_started': mapStartTime.value,
 					'shortversion': shortversion.value,
-					'country': location.value,
+					'country': country_name,
 					'country_shortcode': short_county,
 					'game_name': game_name.value,
 					'count_connection_fail': 0,
@@ -550,7 +585,7 @@ const Adminactions = require("../models/admin_actions");
 		BluebirdPromise.props({
 			servers: Servers.find({'is_stoped': false}, 'name_alias ip port count_connection_fail').sort({'updatedAt': 1}).execAsync()
 		}).then (function(results){
-			if (results.servers){				
+			if (results.servers.length > 0){				
 				updateServersFromArray(results.servers);
 			}	
 		}).then(function onComplete() {
@@ -563,13 +598,13 @@ const Adminactions = require("../models/admin_actions");
 		BluebirdPromise.props({
 			servers: Servers.find({'is_stoped': false}, 'name_alias ip port count_connection_fail').sort({}).execAsync()
 		}).then (function(results){
-			if (results.servers){				
+			if (results.servers.length > 0){				
 				updatePlayersFromArray(results.servers);
 			}	
 		}).then(function onComplete() {
 			//console.log("Players refresh List plugin Completed successfully");
 		}).catch(function onError(err) {
-			console.log("Um...it's not working "+err);
+			console.log("2. Um...it's not working "+err);
 		});
 	}
 	function capitalizeFirstLetter(string) {
@@ -588,20 +623,6 @@ const Adminactions = require("../models/admin_actions");
 				return myArray[i];
 			}
 		}
-	}
-
-	function uncolorize(string) {
-		string = S(string).replaceAll('^0', '').s;
-		string = S(string).replaceAll("^1", "").s;
-		string = S(string).replaceAll("^2", "").s;
-		string = S(string).replaceAll("^3", "").s;
-		string = S(string).replaceAll("^4", "").s;
-		string = S(string).replaceAll("^5", "").s;
-		string = S(string).replaceAll("^6", "").s;
-		string = S(string).replaceAll("^7", "").s;
-		string = S(string).replaceAll("^8", "").s;
-		string = S(string).replaceAll("^9", "").s;
-		return string;
 	}
 
 module.exports = CronJob;
