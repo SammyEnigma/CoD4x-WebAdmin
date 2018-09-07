@@ -13,9 +13,9 @@
 	const BluebirdPromise = require('bluebird');
 	const fs = require('fs');
 	const multiparty = require('multiparty');
-	const recaptcha = require('express-recaptcha');
+	const Recaptcha = require('express-recaptcha').Recaptcha;
 	const config = require('../config/config');
-	recaptcha.init(config.g_recaptcha.SITE_KEY, config.g_recaptcha.SECRET_KEY);
+	var recaptcha = new Recaptcha(config.g_recaptcha.SITE_KEY, config.g_recaptcha.SECRET_KEY);
 	
 	module.exports = function(router, passport){
 
