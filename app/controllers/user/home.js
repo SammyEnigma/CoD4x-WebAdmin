@@ -10,9 +10,9 @@ const path = require('path');
 const formatNum = require('format-num');
 const NodeGeocoder = require('node-geocoder');
 const BluebirdPromise = require('bluebird');
-const recaptcha = require('express-recaptcha');
+const Recaptcha = require('express-recaptcha').Recaptcha;
 const config = require('../../config/config');
-recaptcha.init(config.g_recaptcha.SITE_KEY, config.g_recaptcha.SECRET_KEY);
+var recaptcha = new Recaptcha(config.g_recaptcha.SITE_KEY, config.g_recaptcha.SECRET_KEY);
 const User = require("../../models/user");
 const Plugins = require("../../models/plugins");
 
