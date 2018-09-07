@@ -3,6 +3,7 @@ const mongoosePaginate = require('mongoose-paginate');
 const Pagination = require('pagination-object');
 const moment = require('moment');
 const geoip = require('geoip-lite-country-only');
+const countries = require('country-list')();
 const replace = require("replace");
 const Rcon = require('srcds-rcon');
 const SourceQuery = require('sourcequery');
@@ -42,6 +43,7 @@ const Adminapplications = require("../../models/admin_applications");
 const AdminConversation = require("../../models/admin_conversation");
 const AdminConversationComment= require("../../models/admin_conversation_comments");
 const ChatRooms= require("../../models/chat_rooms");
+const Usermaps = require("../../models/maps");
 const config = require('../../config/config');
 
 
@@ -96,6 +98,7 @@ module.exports = {
 			var server_ip = results.server.ip;
 			var geo = geoip.lookup(server_ip);
 			var short_county = geo.country.toLowerCase();
+			var country_name = countries.getName(geo.country);
 			var sq = new SourceQuery(1000);
 			sq.open(results.server.ip, results.server.port);
 			
@@ -108,57 +111,70 @@ module.exports = {
 						var new_name= info.name
 					}
 
-					sq.getRules(function(error, rules){
-						if(!error){
-							var private_clients = search("sv_privateClients", rules);
-							var max_clients = search("sv_maxclients", rules);
-							var location = search("_Location", rules);
-							var game_name = search("gamename", rules);
-							var gametype = search("g_gametype", rules);
-							var mapStartTime = search("g_mapStartTime", rules);
-							var shortversion = search("shortversion", rules);
-							var players_online_slots = info.players+'/'+info.maxplayers;
-							results.server.name = info.name,
-							results.server.slug_name = new_name,
-							results.server.online_players = players_online_slots,
-							results.server.max_players = max_clients.value,
-							results.server.private_clients = private_clients.value,
-							results.server.map_playing = finalMapName(info.map),
-							results.server.gametype = gametype.value,
-							results.server.map_started = mapStartTime.value,
-							results.server.shortversion = shortversion.value,
-							results.server.map_img = info.map,
-							results.server.country = location.value,
-							results.server.country_shortcode = short_county,
-							results.server.game_name = game_name.value,
-							results.server.count_connection_fail = 0,
-							results.server.is_online = true,
-							results.server.saveAsync()
-						} else{
-							results.server.count_connection_fail = results.server.count_connection_fail+1,
-							results.server.is_online = true,
-							results.server.saveAsync()
-						}
-					})
-
-
-					sq.getPlayers(function(err, players){
-						OnlinePlayers.remove({'server_alias': req.params.name_alias}).execAsync();
-						if (!err){
-							if (info.players > 0){
-								players.forEach(function (player){
-									var newOnlinePlayers = new OnlinePlayers ({
-										server_alias: results.server.name_alias,
-										player_slot: player.index,
-										player_name: player.name,
-										player_score: player.score,
-										player_timeplayed: player.online,
-									});
-									newOnlinePlayers.saveAsync()
-								})
+					//Check if we have an image for the current map
+					Usermaps.findOne({ 'map_name': info.map }, 'map_name', function (err, mapname) {
+						if (err){
+							console.log('There was an error in map find on Server Status refresh: '+err);
+						} else {
+							if (mapname.map_name){
+								var mapimage = mapname.map_name;
+							} else {
+								var mapimage = 'no-photo';
 							}
+
+							sq.getRules(function(error, rules){
+							if(!error){
+								var private_clients = search("sv_privateClients", rules);
+								var max_clients = search("sv_maxclients", rules);
+								var location = search("_Location", rules);
+								var game_name = search("gamename", rules);
+								var gametype = search("g_gametype", rules);
+								var mapStartTime = search("g_mapStartTime", rules);
+								var shortversion = search("shortversion", rules);
+								var players_online_slots = info.players+'/'+info.maxplayers;
+								results.server.name = info.name,
+								results.server.slug_name = new_name,
+								results.server.online_players = players_online_slots,
+								results.server.max_players = max_clients.value,
+								results.server.private_clients = private_clients.value,
+								results.server.map_playing = finalMapName(mapimage),
+								results.server.gametype = gametype.value,
+								results.server.map_started = mapStartTime.value,
+								results.server.shortversion = shortversion.value,
+								results.server.map_img = mapimage,
+								results.server.country = country_name,
+								results.server.country_shortcode = short_county,
+								results.server.game_name = game_name.value,
+								results.server.count_connection_fail = 0,
+								results.server.is_online = true,
+								results.server.saveAsync()
+							} else{
+								results.server.count_connection_fail = results.server.count_connection_fail+1,
+								results.server.is_online = true,
+								results.server.saveAsync()
+							}
+							})
+
+
+							sq.getPlayers(function(err, players){
+								OnlinePlayers.remove({'server_alias': req.params.name_alias}).execAsync();
+								if (!err){
+									if (info.players > 0){
+										players.forEach(function (player){
+											var newOnlinePlayers = new OnlinePlayers ({
+												server_alias: results.server.name_alias,
+												player_slot: player.index,
+												player_name: player.name,
+												player_score: player.score,
+												player_timeplayed: player.online,
+											});
+											newOnlinePlayers.saveAsync()
+										})
+									}
+								}
+								
+							});	
 						}
-						
 					});
 				}
 			})
