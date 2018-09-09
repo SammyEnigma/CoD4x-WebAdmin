@@ -479,7 +479,7 @@ const Adminactions = require("../models/admin_actions");
 						console.log(err)
 					}else if (players){
 						if (players.length > 0){
-							async.eachSeries(results.servers, function (player, next){
+							async.eachSeries(players, function (player, next){
 								setTimeout(function() {
 									if (player){
 										var newOnlinePlayers = new OnlinePlayers ({
@@ -504,96 +504,7 @@ const Adminactions = require("../models/admin_actions");
 			}
 		});
 	};
-	function update_servers_individual(myserver) {
-		var server_id = myserver.name_alias;
-		var server_ip = myserver.ip;
-		var geo = geoip.lookup(server_ip);
-		var short_county = geo.country.toLowerCase();
-		var country_name = countries.getName(geo.country);
 
-		var sq = new SourceQuery(3000);
-		sq.open(myserver.ip, myserver.port);
-		sq.getInfo(function(err, info){
-			if (err){
-				console.log('Server status update plugin error: '+err);
-			}else{
-				//Remove Host(Rounds: 0/0) from alias if it exist on Promod Servers or ib main_shared
-				if (S(info.name).contains('Round') == true){
-					var new_name = info.name.split("Round")[0];
-				}else{
-					var new_name= info.name
-				}
-
-				//Check if we have an image for the current map
-				Usermaps.findOne({ 'map_name': info.map }, 'map_name', function (err, mapname) {
-					if (err){
-						console.log('There was an error in map find on Server Status refresh: '+err);
-					} else {
-						if (mapname.map_name){
-							var mapimage = mapname.map_name;
-						} else {
-							var mapimage = 'no-photo';
-						}
-
-						Servers.findOneAndUpdate({ "_id": myserver._id }, { "$set": {
-							'name':info.name,
-							'online_players': info.players+'/'+info.maxplayers,
-							'map_playing': finalMapName(info.map),
-							'map_img': mapimage,
-							'slug_name': new_name}}).exec(function(err, done){
-							if(err) {
-								console.log(err);
-							}
-						});
-					}
-				});
-
-				
-			}			    
-		})			
-		sq.getRules(function(error, rules){
-			if(!error){
-				var private_clients = search("sv_privateClients", rules);
-				var max_clients = search("sv_maxclients", rules);
-				var game_name = search("gamename", rules);
-				var gametype = search("g_gametype", rules);
-				var mapStartTime = search("g_mapStartTime", rules);
-				var shortversion = search("shortversion", rules);
-
-				Servers.findOneAndUpdate({ "_id": myserver._id }, { "$set": {
-					'max_players':max_clients.value,
-					'private_clients': private_clients.value,
-					'gametype': gametype.value,
-					'map_started': mapStartTime.value,
-					'shortversion': shortversion.value,
-					'country': country_name,
-					'country_shortcode': short_county,
-					'game_name': game_name.value,
-					'count_connection_fail': 0,
-					'is_online': true
-				}}).exec(function(err, done){
-					if(err) {
-						console.log(err);
-					}
-				});
-			} else {
-				console.log('Something went wrong '+error)
-				Servers.findOneAndUpdate({ "_id": myserver._id }, { "$set": {
-					'is_online': true,
-					'count_connection_fail': myserver.count_connection_fail+1
-				}}).exec(function(err, done){
-					if(err) {
-						console.log(err);
-					}
-				});
-			}
-		})
-	};
-	function updateServersFromArray(serverArray){
-		return BluebirdPromise.all(serverArray.map(function(singleServer){
-			return update_servers_individual(singleServer);
-		}));
-	}
 	function updatePlayersFromArray(serverArray){
 		return BluebirdPromise.all(serverArray.map(function(singleServer){
 			return update_playerlist_individual(singleServer);
@@ -604,12 +515,81 @@ const Adminactions = require("../models/admin_actions");
 			servers: Servers.find({'is_stoped': false}, 'name_alias ip port count_connection_fail').sort({'updatedAt': 1}).execAsync()
 		}).then (function(results){
 			if (results.servers.length > 0){				
-				updateServersFromArray(results.servers);
+				
+				async.eachSeries(results.servers, function (server, next){
+					setTimeout(function() {
+						var server_id = server.name_alias;
+						var server_ip = server.ip;
+						var geo = geoip.lookup(server_ip);
+						var short_county = geo.country.toLowerCase();
+						var country_name = countries.getName(geo.country);
+						var sq = new SourceQuery(1000);
+						sq.open(server.ip, server.port);
+						
+						sq.getInfo(function(err, info){
+							if (!err){
+								//Remove Host(Rounds: 0/0) from alias if it exist on Promod Servers
+								if (S(info.name).contains('Round') == true){
+									var new_name = info.name.split("Round")[0];
+								}else{
+									var new_name= info.name
+								}
+
+								//Check if we have an image for the current map
+								Usermaps.findOne({ 'map_name': info.map }, 'map_name', function (err, mapname) {
+									if (err){
+										console.log('There was an error in map find on Server Status refresh: '+err);
+									} else {
+										if (mapname){
+											var mapimage = mapname.map_name;
+										} else {
+											var mapimage = 'no-photo';
+										}
+
+										sq.getRules(function(error, rules){
+											if(!error){
+												var private_clients = search("sv_privateClients", rules);
+												var max_clients = search("sv_maxclients", rules);
+												var location = search("_Location", rules);
+												var game_name = search("gamename", rules);
+												var gametype = search("g_gametype", rules);
+												var mapStartTime = search("g_mapStartTime", rules);
+												var shortversion = search("shortversion", rules);
+												var players_online_slots = info.players+'/'+info.maxplayers;
+												server.name = info.name,
+												server.slug_name = new_name,
+												server.online_players = players_online_slots,
+												server.max_players = max_clients.value,
+												server.private_clients = private_clients.value,
+												server.map_playing = finalMapName(info.map),
+												server.gametype = gametype.value,
+												server.map_started = mapStartTime.value,
+												server.shortversion = shortversion.value,
+												server.map_img = mapimage,
+												server.country = country_name,
+												server.country_shortcode = short_county,
+												server.game_name = game_name.value,
+												server.count_connection_fail = 0,
+												server.is_online = true,
+												server.saveAsync()
+											} else{
+												server.count_connection_fail = server.count_connection_fail+1,
+												server.is_online = true,
+												server.saveAsync()
+											}
+										})
+									}
+								});
+							}
+						})
+						next(); // don't forget to execute the callback!
+					}, 4000);
+				}, function () {
+					console.log('Done going through Servers!');
+				});
 			}	
-		}).then(function onComplete() {
-			//console.log("Servers status update Completed successfully");
-		}).catch(function onError(err) {
-			console.log("Um...it's not working "+err);
+		}).catch(function(err) {
+			console.log("There was an error , plugin refresh server status: " +err);
 		});
 	}
 	function refreshplayerlist(req, res, next) {
