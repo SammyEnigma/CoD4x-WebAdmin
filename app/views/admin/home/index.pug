@@ -37,8 +37,6 @@ block content
 												i.zmdi.zmdi-more-vert
 											ul.dropdown-menu.dropdown-menu-right
 												li
-													a(href='/admin/game-servers-instructions') Instructions
-												li
 													a(href='/admin/download-game-server-files') Download Server Files
 												li
 													a(href='/admin/extract-game-server-files') Extract Server Files
@@ -176,6 +174,26 @@ block content
 												br
 												| Support
 									.clearfix
+						.row
+							.card
+								.card-header
+									h2
+										span.zmdi.zmdi-archive
+										|  CoD4x-WebaAdmin Database
+										small CoD4x-WebaAdmin backup your database or restore it to the latest backed up version
+								.card-body.card-padding
+									.row
+										.col-md-3.text-center
+											a.admin-panel(href="/admin/backup-mongodb")
+												span.zmdi.zmdi-archive.zmdi-hc-3x
+												br
+												| Backup DB
+										.col-md-3.text-center
+											a.admin-panel(href="/admin/restore-mongodb")
+												span.zmdi.zmdi-assignment-return.zmdi-hc-3x
+												br
+												| Restore DB from Backup
+									.clearfix
 					.col-md-4
 						.row
 							.col-sm-12.col-md-12
@@ -201,8 +219,12 @@ block content
 								.card
 									.card-header
 										h2
-											span.zmdi.zmdi-refresh-sync
-											|  Updates
+											span.zmdi.zmdi-apps
+											|  CoD4x WebAdmin version check
+										ul.actions
+											li
+												a(href='/admin/check-github-relase')
+													i.zmdi.zmdi-refresh-alt
 									.card-body
 										if (results.appversion.local_version!=results.appversion.github_version)
 											.alert.alert-danger

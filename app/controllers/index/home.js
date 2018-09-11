@@ -94,7 +94,6 @@ module.exports = {
 			rcon_extra: ExtraRcon.findOne({'name': 'extra_rcon'}).execAsync(),
 			plugins: Plugins.findOne({'category' : 'kgb', 'status':true}).execAsync()
 		}).then (function(results){
-			var server_id = results.server.name_alias;
 			var server_ip = results.server.ip;
 			var geo = geoip.lookup(server_ip);
 			var short_county = geo.country.toLowerCase();
@@ -116,7 +115,7 @@ module.exports = {
 						if (err){
 							console.log('There was an error in map find on Server Status refresh: '+err);
 						} else {
-							if (mapname.map_name){
+							if (mapname){
 								var mapimage = mapname.map_name;
 							} else {
 								var mapimage = 'no-photo';
@@ -137,10 +136,10 @@ module.exports = {
 								results.server.online_players = players_online_slots,
 								results.server.max_players = max_clients.value,
 								results.server.private_clients = private_clients.value,
-								results.server.map_playing = finalMapName(mapimage),
+								results.server.map_playing = finalMapName(info.map),
 								results.server.gametype = gametype.value,
 								results.server.map_started = mapStartTime.value,
-								results.server.shortversion = shortversion.value,
+								results.server.shortversion = info.version,
 								results.server.map_img = mapimage,
 								results.server.country = country_name,
 								results.server.country_shortcode = short_county,
@@ -160,6 +159,7 @@ module.exports = {
 								OnlinePlayers.remove({'server_alias': req.params.name_alias}).execAsync();
 								if (!err){
 									if (info.players > 0){
+										console.log(players);
 										players.forEach(function (player){
 											var newOnlinePlayers = new OnlinePlayers ({
 												server_alias: results.server.name_alias,

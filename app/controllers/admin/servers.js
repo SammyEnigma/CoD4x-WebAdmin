@@ -14,7 +14,6 @@ const BluebirdPromise = require('bluebird');
 const SSH = require('simple-ssh');
 const wget = require('wget-improved');
 const exec = require('child_process').exec;
-const forever = require('forever-monitor');
 const moment = require('moment');
 const Servers = require("../../models/servers");
 const ExtraRcon = require("../../models/extra_rcon_commands");

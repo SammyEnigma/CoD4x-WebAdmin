@@ -1,6 +1,11 @@
 // Require needed modules
 const mongoose = require('mongoose');
 const BluebirdPromise = require('bluebird');
+const jsonfile = require('jsonfile');
+const githubLatestRelease = require('github-latest-release');
+const backup = require('mongodb-backup');
+const restore = require('mongodb-restore');
+const config = require('../../config/config');
 const Appversion = require("../../models/app_version");
 const AdminGroups = require("../../models/admingroups");
 const Rconposition = require("../../models/rconcommand_position");
@@ -10,6 +15,7 @@ const Color = require("../../models/colors");
 const Servers = require("../../models/servers");
 const Cod4xversion = require("../../models/cod4x_version");
 const Systemlogs = require("../../models/system_logs");
+
 
 
 //Set dates for testing
@@ -48,5 +54,88 @@ module.exports = {
   			console.log(err);
   			res.redirect('/user/profile');
   		});
+	},
+
+
+	getMongoDBbackup: function(req, res, next) {
+		var dburi = "mongodb://" + 
+			encodeURIComponent(config.db.username) + ":" + 
+			encodeURIComponent(config.db.password) + "@" + 
+			config.db.host + ":" + 
+			config.db.port + "/" + 
+			config.db.name;
+		backup({
+			uri: dburi, // mongodb://<dbuser>:<dbpassword>@<dbdomain>.mongolab.com:<dbport>/<dbdatabase>
+			root: './backup', // write files into this dir
+			tar: 'mydb.tar',
+			callback: function(err) {
+				if (err) {
+					console.error(err);
+					req.flash('error_messages', 'MongoDB backup error: '+err);
+					res.redirect('back');
+				} else {
+					req.flash('success_messages', 'MongoDB successfully backed up!');
+					res.redirect('back');
+				}
+			}
+		});
+
+	},
+
+	getMongoDBrestore: function(req, res, next) {
+		var dburi = "mongodb://" + 
+			encodeURIComponent(config.db.username) + ":" + 
+			encodeURIComponent(config.db.password) + "@" + 
+			config.db.host + ":" + 
+			config.db.port + "/" + 
+			config.db.name;
+		restore({
+			uri: dburi, // mongodb://<dbuser>:<dbpassword>@<dbdomain>.mongolab.com:<dbport>/<dbdatabase>
+			root: './backup', // write files into this dir
+			tar: 'mydb.tar',
+			callback: function(err) {
+				if (err) {
+					console.error(err);
+					req.flash('error_messages', 'MongoDB restore error: '+err);
+					res.redirect('back');
+				} else {
+					req.flash('success_messages', 'MongoDB successfully restored to lastest backup!');
+					res.redirect('back');
+				}
+			}
+		});
+
+	},
+
+	getGithubRelase: function(req, res, next) {
+		var my_packagejsonfile = './package.json';
+		githubLatestRelease('byNeHo', 'CoD4x-WebAdmin', function (err, github_results){
+			jsonfile.readFile(my_packagejsonfile, function(err, obj) {
+				if (err){
+					console.log(err)
+				} else{
+					//If there is a result
+					if ( typeof github_results !== 'undefined' && github_results){
+						//console.log(github_results);
+						var myversion = 'v'+obj.version;
+						Appversion.findOneAndUpdate({name:'CoD4x-WebAdmin' }, { "$set": {
+							'local_version': myversion,
+							'github_version': github_results.tag_name
+						}}).exec(function(err, done){
+							if(err) {
+								console.log(err);
+								req.flash('error_messages', 'Github latest version check failed with next error: '+err);
+								res.redirect('back');
+							} else{
+								req.flash('success_messages', 'Github latest version successfully checked/updated');
+								res.redirect('back');
+							}
+						});
+					}else{
+						console.log('Could not get the latest version from github');
+					}
+				}
+			})
+		})
 	},
 };

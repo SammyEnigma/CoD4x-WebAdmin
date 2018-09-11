@@ -31,6 +31,9 @@ module.exports = function(router, passport){
 
 	router.get('/home', requireRole(100), isLoggedIn, index.getAdminHome);
 	router.get('/rcon-settings', requireRole(100), isLoggedIn, index.getRconSettings);
+	router.get('/check-github-relase', requireRole(100), isLoggedIn, index.getGithubRelase);
+	router.get('/backup-mongodb', requireRole(100), isLoggedIn, index.getMongoDBbackup);
+	router.get('/restore-mongodb', requireRole(100), isLoggedIn, index.getMongoDBrestore);
 
 	/*###################### SERVERS ##################################################*/
 

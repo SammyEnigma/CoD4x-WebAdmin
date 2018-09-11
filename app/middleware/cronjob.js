@@ -102,7 +102,11 @@ const Adminactions = require("../models/admin_actions");
 						if (err){
 							console.log('Remove old system cronjob logs error: '+err)
 						} else {
-							console.log('Old system logs removed')
+							var newSystemlogs = new Systemlogs ({
+								logline: 'Old system logs removed',
+								successed: true
+							});
+							newSystemlogs.saveAsync()
 						}
 					});
 				}
@@ -153,9 +157,9 @@ const Adminactions = require("../models/admin_actions");
 
 	// ################################ Restart server every day at X hours ################################ //
 
-	var runstophourly = schedule.scheduleJob('0 * * * *', function(){
+	var runstophourly = schedule.scheduleJob('0 0 */1 * * *', function(){
 		BluebirdPromise.props({
-			servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': false}, 'name name_alias ip port count_connection_fail, script_starter').execAsync()
+			servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': false}, 'port').execAsync()
 		}).then (function(results){
 			if (results.servers.length > 0){
 				var ssh = new SSH({
@@ -191,10 +195,10 @@ const Adminactions = require("../models/admin_actions");
 			console.log("There was an error in plugin auto restart servers: " +err);
 		});
 	})
-	var runstarthourly = schedule.scheduleJob('2 * * * *', function(){
+	var runstarthourly = schedule.scheduleJob('0 2 */1 * * *', function(){
 		// Start server every day at X hours + 2min (Part of stop server every day at X hours)
 		BluebirdPromise.props({
-			servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': true}, 'name name_alias ip port count_connection_fail, script_starter').execAsync(),
+			servers: Servers.find({'auto_restart_server' : true, 'time_to_restart_server': current_time, 'external_ip':false, 'is_stoped': true}, 'name port, script_starter').execAsync(),
 			plugin: Plugins.findOne({'name_alias': 'cod4x-authtoken', 'status':true}, 'extra_field').execAsync()
 		}).then (function(results){
 			if (results.servers.length > 0){
@@ -518,7 +522,6 @@ const Adminactions = require("../models/admin_actions");
 				
 				async.eachSeries(results.servers, function (server, next){
 					setTimeout(function() {
-						var server_id = server.name_alias;
 						var server_ip = server.ip;
 						var geo = geoip.lookup(server_ip);
 						var short_county = geo.country.toLowerCase();
@@ -564,7 +567,7 @@ const Adminactions = require("../models/admin_actions");
 												server.map_playing = finalMapName(info.map),
 												server.gametype = gametype.value,
 												server.map_started = mapStartTime.value,
-												server.shortversion = shortversion.value,
+												server.shortversion = info.version,
 												server.map_img = mapimage,
 												server.country = country_name,
 												server.country_shortcode = short_county,
